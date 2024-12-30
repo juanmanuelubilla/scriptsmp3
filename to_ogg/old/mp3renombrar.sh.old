@@ -1,0 +1,53 @@
+#!/bin/bash
+
+directorio="$1"
+
+# Buscar archivos con símbolos no permitidos en el nombre
+find "$directorio" -type f -name '*[<>:"/\\|?*]*' -print0 | while IFS= read -r -d '' archivo; do
+    # Obtener el nombre del archivo y la ruta del directorio
+    nombre_archivo=$(basename "$archivo")
+    directorio_archivo=$(dirname "$archivo")
+    
+    # Eliminar los símbolos no permitidos del nombre del archivo
+    nuevo_nombre=$(echo "$nombre_archivo" | sed 's/[<>:"/\\|?*]//g')
+    
+    # Renombrar el archivo
+    if [ "$nombre_archivo" != "$nuevo_nombre" ]; then
+        mv "$archivo" "$directorio_archivo/$nuevo_nombre"
+        echo "Archivo renombrado: $archivo -> $directorio_archivo/$nuevo_nombre"
+    fi
+done
+
+# Buscar carpetas con símbolos no permitidos en el nombre
+find "$directorio" -type d -name '*[<>:"/\\|?*]*' -print0 | while IFS= read -r -d '' archivo; do
+    # Obtener el nombre del archivo y la ruta del directorio
+    nombre_archivo=$(basename "$archivo")
+    directorio_archivo=$(dirname "$archivo")
+    
+    # Eliminar los símbolos no permitidos del nombre del archivo
+    nuevo_nombre=$(echo "$nombre_archivo" | sed 's/[<>:"/\\|?*]//g')
+    
+    # Renombrar el archivo
+    if [ "$nombre_archivo" != "$nuevo_nombre" ]; then
+        mv "$archivo" "$directorio_archivo/$nuevo_nombre"
+        echo "Archivo renombrado: $archivo -> $directorio_archivo/$nuevo_nombre"
+    fi
+done
+
+
+
+# Función para eliminar comillas simples en un nombre de archivo o carpeta
+remove_quotes() {
+    new_name=$(echo "$1" | tr "'" "´")
+    mv "$1" "$new_name"
+}
+
+# Directorio base donde comenzará la búsqueda y reemplazo
+base_dir="$1"
+
+# Buscar y eliminar comillas simples en nombres de archivos y carpetas
+find "$base_dir" -depth -name "*'*" | while read item; do
+    remove_quotes "$item"
+done
+
+

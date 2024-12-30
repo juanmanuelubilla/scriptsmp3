@@ -13,6 +13,9 @@ sudo apt-get install ffmpeg faac vorbis-tools atomicparsley mediainfo fdkaac -y
 #EXTRAIGO LOS COVER DE LOS ARCHIVOS OGG
 sudo ./to_m4a/oggextractimage.sh "$1"
 
+#EXPORTO LA METADATA
+#sudo ./oggexportmetadata.sh "$1"
+
 #CONVIERTO LOS ARCHIVOS A M4A
 sudo ./to_m4a/oggconvert.sh "$1" 96
 

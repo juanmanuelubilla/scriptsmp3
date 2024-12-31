@@ -1,5 +1,24 @@
 #!/bin/bash
 
+# Verificar que se haya proporcionado un argumento
+if [ -z "$1" ]; then
+  echo "Por favor, proporciona un directorio."
+  exit 1
+fi
+
+# Verificar si el argumento es un directorio válido
+if [ ! -d "$1" ]; then
+  echo "El argumento proporcionado no es un directorio válido."
+  exit 1
+fi
+
+# Contar carpetas y archivos en el directorio proporcionado
+carpetas=$(find "$1" -type d | wc -l)
+archivos=$(find "$1" -type f | wc -l)
+
+# Imprimir el resumen con saltos de línea
+echo -e "CARPETAS: $((carpetas - 1))\nARCHIVOS: $archivos\n\n"
+
 #RUTA ACTUAL
 ruta_actual=$(pwd)
 

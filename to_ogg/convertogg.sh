@@ -7,7 +7,7 @@ ruta_actual=$(pwd)
 echo "LA RUTA ESPECIFICADA ES: $1"
 
 #INSTALO LO QUE NECESITO
-sudo apt-get install faac ffmpeg dir2ogg gawk kid3-cli sysstat sysstat findutils flac lame mplayer -y
+sudo apt-get install ffmpeg dir2ogg kid3-cli -y
 
 #VERIFICO E INSTALO POWERSHELL
 sudo ./to_ogg/install_powershell.sh
@@ -20,7 +20,6 @@ sudo ./to_ogg/mp3extractimage.sh "$1"
 
 #CONVIERTO CARPETAS A OGG
 sudo dir2ogg -d "$1" -r -q 4.50 --delete-input
-#sudo ./to_ogg/dir2ogg_convert.sh "$1"
 
 #CAMBIO PERMISOS DE ARCHIVOS
 sudo chmod 777 -R "$1"

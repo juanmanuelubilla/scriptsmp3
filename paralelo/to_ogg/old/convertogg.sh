@@ -51,10 +51,67 @@ sudo pwsh ./to_ogg/mp3script2.ps1 "$1"
 cd "$1"
 
 #CAMBIO PERMISOS DEL ARCHIVO BASH
-sudo chmod +x IMPORTALBUMCOVER.sh
+#sudo chmod +x IMPORTALBUMCOVER.sh
+
+
+#!/bin/bash
+
+# Define el directorio raíz donde buscar (puedes modificarlo según tus necesidades)
+DIRECTORIO="$1"
+
+# Busca los archivos con el patrón IMPORTALBUMCOVER*.sh y aplica chmod +x
+echo "Buscando archivos IMPORTALBUMCOVER*.sh en $DIRECTORIO..."
+ARCHIVOS_ENCONTRADOS=$(find "$DIRECTORIO" -type f -name "IMPORTALBUMCOVER*.sh")
+
+if [ -z "$ARCHIVOS_ENCONTRADOS" ]; then
+    echo "No se encontraron archivos que coincidan con el patrón."
+else
+    echo "Archivos encontrados:"
+    echo "$ARCHIVOS_ENCONTRADOS"
+    echo ""
+    echo "Otorgando permisos de ejecución..."
+    
+    while IFS= read -r ARCHIVO; do
+        chmod +x "$ARCHIVO"
+        if [ $? -eq 0 ]; then
+            echo "Permisos otorgados correctamente a: $ARCHIVO"
+        else
+            echo "Error al otorgar permisos a: $ARCHIVO"
+        fi
+    done <<< "$ARCHIVOS_ENCONTRADOS"
+    
+    echo ""
+    echo "Operación completada."
+fi
+
+
+
 
 #EJECUTO ARCHIVO BASH GENERADO DEL PUNTO 10
-sudo ./IMPORTALBUMCOVER.sh
+#./IMPORTALBUMCOVER.sh
+
+
+sudo ./IMPORTALBUMCOVER_1.sh
+sudo ./IMPORTALBUMCOVER_2.sh
+sudo ./IMPORTALBUMCOVER_3.sh
+sudo ./IMPORTALBUMCOVER_4.sh
+sudo ./IMPORTALBUMCOVER_5.sh
+sudo ./IMPORTALBUMCOVER_6.sh
+sudo ./IMPORTALBUMCOVER_7.sh
+sudo ./IMPORTALBUMCOVER_8.sh
+
+# Esperar a que todos los procesos terminen
+wait
+
+
+
+
+
+
+
+
+
+
 
 #ELIMINO EL ARCHIVO IMPORTALBUMCOVER.sh
 #sudo rm IMPORTALBUMCOVER.sh

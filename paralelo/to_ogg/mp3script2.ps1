@@ -34,7 +34,7 @@ foreach ($findmp3folders in $findmp3folder) {
     write-host $importcover
     #Add-Content -Path $NEWPATH -Value $importcover
   
-    #$comando1 = "echo COVER IMPORTADO: $findmp3folders.Directory/$findmp3folders.BaseName.jpg"
+    #$comando1 = "echo COVER IMPORTADO: $findmp3folders.4028Directory/$findmp3folders.BaseName.jpg"
     $comando1 = "echo 'COVER IMPORTADO: $folderemp3/$namemp3.jpg'"
     #Add-Content -Path $NEWPATH -Value $comando1 
     
@@ -51,7 +51,8 @@ if $importcover; then
     $comando1
     $comando2
 else
-    echo 'Error al importar la portada: $folderemp3/$namemp3.jpg'
+    echo -e '\033[1;31mError al importar la portada: $folderemp3/$namemp3.jpg\033[0m'
+
 fi"
     Add-Content -Path $NEWPATH -Value $scriptLine
 }

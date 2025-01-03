@@ -47,11 +47,11 @@ sudo ./to_ogg/dir2ogg_convert.sh "$1"
 # CAMBIO PERMISOS DE ARCHIVOS
 sudo chmod 777 -R -v "$1"
 
-sudo ./to_ogg/import_cover.sh "$1"
-#python ./to_ogg/import_cover.py "$1"
-
+# EJECUTO SCRIPT DE IMPORTACION DE TAPAS DE ALBUM DE MP3
+#sudo ./to_ogg/import_cover.sh "$1"
 
 # EJECUTO SCRIPT DE IMPORTACION DE TAPAS DE ALBUM DE MP3 Y CREACION DE ARCHIVO BASH
+sudo pwsh ./to_ogg/mp3script2-multiplesarchivos.ps1 "$1"
 #sudo pwsh ./to_ogg/mp3script2.ps1 "$1"
 #sudo ./to_ogg/createfileimportjpg.sh "$1"
 
@@ -60,12 +60,27 @@ cd "$1"
 
 # CAMBIO PERMISOS DEL ARCHIVO BASH
 #sudo chmod +x IMPORTALBUMCOVER.sh
+sudo chmod +x IMPORTALBUMCOVER*.sh
+
 
 # EJECUTO ARCHIVO BASH GENERADO DEL PUNTO 10
 #sudo ./IMPORTALBUMCOVER.sh
 
+# Directorio donde están los scripts
+directorio="$1"
+
+# Contar cuántos núcleos libres tiene el sistema (puedes ajustarlo según el caso)
+num_hilos=$(nproc)
+
+# Buscar los archivos y ejecutarlos en paralelo, un archivo por hilo
+find "$directorio" -type f -name "IMPORTALBUMCOVER*.sh" | xargs -I {} -P "$num_hilos" bash -c 'chmod +x "{}" && "{}"'
+
+# Esperar a que todos los procesos terminen
+wait
+
 # ELIMINO EL ARCHIVO IMPORTALBUMCOVER.sh
 #sudo rm IMPORTALBUMCOVER.sh
+sudo rm IMPORTALBUMCOVER*.sh
 
 # VOY A LA CARPETA DE SCRIPTS
 cd $ruta_actual

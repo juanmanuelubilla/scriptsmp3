@@ -3,63 +3,58 @@
 # El directorio de entrada
 directorio="$1"
 
-# Función para eliminar caracteres sustitutos y otros no permitidos
+# Asegurar que el entorno use UTF-8
+export LC_ALL=C.UTF-8
+export LANG=C.UTF-8
+
+# Función para eliminar caracteres no permitidos específicos
 sanitize_filename() {
-    # Reemplaza caracteres Unicode no válidos (como \udcc2) y otros símbolos no permitidos con un guion bajo
-    echo "$1" | iconv -f utf-8 -t utf-8//IGNORE | sed 's/[<>:"/\\|?*]//g'
+    # Reemplaza símbolos no permitidos con un guion bajo
+    echo "$1" | sed 's/[<>:"/\\|?*]//g'
 }
-
-# Buscar archivos con símbolos no permitidos en el nombre
-find "$directorio" -type f -print0 | while IFS= read -r -d '' archivo; do
-    # Obtener el nombre del archivo y la ruta del directorio
-    nombre_archivo=$(basename "$archivo")
-    directorio_archivo=$(dirname "$archivo")
-    
-    # Eliminar los símbolos no permitidos del nombre del archivo
-    nuevo_nombre=$(sanitize_filename "$nombre_archivo")
-    
-    # Renombrar el archivo si es necesario
-    if [ "$nombre_archivo" != "$nuevo_nombre" ]; then
-        if ! mv "$archivo" "$directorio_archivo/$nuevo_nombre"; then
-            echo "Error renombrando el archivo: $archivo"
-        else
-            echo "Archivo renombrado: $archivo -> $directorio_archivo/$nuevo_nombre"
-        fi
-    fi
-done
-
-# Buscar carpetas con símbolos no permitidos en el nombre
-find "$directorio" -type d -print0 | while IFS= read -r -d '' archivo; do
-    # Obtener el nombre del archivo y la ruta del directorio
-    nombre_archivo=$(basename "$archivo")
-    directorio_archivo=$(dirname "$archivo")
-    
-    # Eliminar los símbolos no permitidos del nombre del archivo
-    nuevo_nombre=$(sanitize_filename "$nombre_archivo")
-    
-    # Renombrar el archivo si es necesario
-    if [ "$nombre_archivo" != "$nuevo_nombre" ]; then
-        if ! mv "$archivo" "$directorio_archivo/$nuevo_nombre"; then
-            echo "Error renombrando la carpeta: $archivo"
-        else
-            echo "Carpeta renombrada: $archivo -> $directorio_archivo/$nuevo_nombre"
-        fi
-    fi
-done
 
 # Función para eliminar comillas simples en un nombre de archivo o carpeta
 remove_quotes() {
     # Reemplaza comillas simples por acentos graves
-    new_name=$(echo "$1" | sed "s/'/´/g")
-    if ! mv "$1" "$new_name"; then
-        echo "Error renombrando el archivo o carpeta: $1"
-    else
-        echo "Renombrado: $1 -> $new_name"
-    fi
+    echo "$1" | sed "s/'/´/g"
 }
 
-# Buscar y eliminar comillas simples en nombres de archivos y carpetas
-find "$directorio" -depth -name "*'*" -print0 | while IFS= read -r -d '' item; do
-    remove_quotes "$item"
-done
+# Función para eliminar iconos no imprimibles
+remove_non_printable_chars() {
+    # Elimina caracteres no imprimibles y de control (excepto los permitidos como espacio, tabulación, salto de línea)
+    echo "$1" | tr -cd '\11\12\15\40-\176'
+}
 
+# Función para eliminar caracteres no deseados pero preservando las vocales acentuadas
+remove_unwanted_characters() {
+    # Reemplaza caracteres no deseados por guiones bajos, pero preserva los acentos
+    echo "$1" | sed 's/[<>:"/\\|?*]//g'
+}
+
+# Función para procesar archivos y carpetas
+process_files_and_dirs() {
+    # Buscar archivos y carpetas con los símbolos no permitidos
+    find "$directorio" -depth -print0 | while IFS= read -r -d '' item; do
+        # Obtener el nombre del archivo o carpeta y la ruta del directorio
+        nombre_item=$(basename "$item")
+        directorio_item=$(dirname "$item")
+        
+        # Aplicar funciones de saneamiento
+        nuevo_nombre=$(sanitize_filename "$nombre_item")
+        nuevo_nombre=$(remove_quotes "$nuevo_nombre")
+        nuevo_nombre=$(remove_unwanted_characters "$nuevo_nombre")
+        nuevo_nombre=$(remove_non_printable_chars "$nuevo_nombre")
+        
+        # Renombrar si el nombre cambia
+        if [ "$nombre_item" != "$nuevo_nombre" ]; then
+            if ! mv "$item" "$directorio_item/$nuevo_nombre"; then
+                echo "Error renombrando: $item"
+            else
+                echo "Renombrado: $item -> $directorio_item/$nuevo_nombre"
+            fi
+        fi
+    done
+}
+
+# Llamar a la función para procesar los archivos y carpetas
+process_files_and_dirs

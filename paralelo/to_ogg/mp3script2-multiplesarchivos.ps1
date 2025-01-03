@@ -58,19 +58,34 @@ for ($i = 0; $i -lt $availableThreads; $i++) {
         $file = $oggFiles[$j]
         $folderemp3 = $file.DirectoryName
         $baseName = $file.BaseName
+        
+        # Definir el archivo temporal con _tmp en lugar de .tmp
+        $temp_file = "$($file.DirectoryName)/$($baseName)_tmp.ogg"
+        
+        # Definir el archivo de destino completo
+        $full_ogg_file = "$($file.DirectoryName)/$($baseName).ogg"
 
-        # Mantener el formato original de $importcover
-        $importcover1 = 'kid3-cli -c "select all" -c ''set picture:'
-        $importcover2 = '"' + $folderemp3 + '/' + $baseName + '.jpg" ""'' "' + $file.FullName + '"'
-        $importcover = "$importcover1$importcover2"
+        # Comando para copiar el archivo original al nuevo archivo temporal
+        $copytmp = "sudo cp '$($file.FullName)' '$($temp_file)'"
 
-        $echoCommand = "echo COVER IMPORTADO: '$folderemp3/$baseName.jpg'"
-        $removeCommand = "sudo rm '$folderemp3/$baseName.jpg'"
+        # Comando para mover el archivo temporal al archivo original
+        $movetmp = "sudo mv -f '$temp_file' '$full_ogg_file'"
 
-        $scriptLine = "$importcover && $echoCommand && $removeCommand"
-        #$scriptLine = $importcover
+        # Comando para importar la portada usando ffmpeg
+        $importcover = 'ffmpeg -y -i "' + $($file.FullName) + '" -i "' + $($folderemp3) + '/' + $($baseName) + '.jpg" -c:a copy -id3v2_version 3 -metadata:s:v title="Portada" -metadata:s:v comment="Imagen de portada" "' + $($temp_file) + '"'
 
-        # Agregar comandos al script
+        # Echo para mostrar que se ha importado la portada
+        $echoCommand = "echo COVER IMPORTADO: '$($folderemp3)/$($baseName).jpg'"
+
+        # Comando para eliminar la portada
+        $removeCommand = "sudo rm '$($folderemp3)/$($baseName).jpg'"
+
+        # Crear la línea de comandos para el script
+        
+        $scriptLine = "if $copytmp && $importcover; then echo 'COVER IMPORTADO: $($folderemp3)/$($baseName).jpg'; sudo rm '$($folderemp3)/$($baseName).jpg' && sudo mv -f '$($temp_file)' '$($file.FullName)'; else echo 'Error al agregar caratula: $($folderemp3)/$($baseName).jpg' >&2; fi"
+        #$scriptLine = "$copytmp && $importcover && $echoCommand && $removeCommand && $movetmp"
+
+        # Agregar los comandos al archivo del script
         try {
             Add-Content -Path $scriptPath -Value $scriptLine
         } catch {
@@ -81,4 +96,3 @@ for ($i = 0; $i -lt $availableThreads; $i++) {
 }
 
 write-host "Todos los scripts han sido generados exitosamente."
-

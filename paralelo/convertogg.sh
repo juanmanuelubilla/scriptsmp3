@@ -29,7 +29,8 @@ ruta_actual=$(pwd)
 echo "LA RUTA ESPECIFICADA ES: $1"
 
 # INSTALO LO QUE NECESITO
-sudo apt-get install faac ffmpeg dir2ogg gawk kid3-cli sysstat sysstat findutils flac lame mplayer libimage-exiftool-perl parallel bc -y
+sudo apt-get install faac ffmpeg dir2ogg gawk kid3-cli sysstat sysstat findutils flac lame mplayer libimage-exiftool-perl parallel bc y
+
 
 # VERIFICO E INSTALO POWERSHELL
 sudo ./to_ogg/install_powershell.sh
@@ -45,6 +46,10 @@ sudo ./to_ogg/dir2ogg_convert.sh "$1"
 
 # CAMBIO PERMISOS DE ARCHIVOS
 sudo chmod 777 -R "$1"
+
+#sudo ./to_ogg/import_cover.sh "$1"
+#python ./to_ogg/import_cover.py "$1"
+
 
 # EJECUTO SCRIPT DE IMPORTACION DE TAPAS DE ALBUM DE MP3 Y CREACION DE ARCHIVO BASH
 sudo pwsh ./to_ogg/mp3script2.ps1 "$1"

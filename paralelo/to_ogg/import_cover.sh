@@ -1,66 +1,65 @@
 #!/bin/bash
 
-# Directorio pasado como argumento
-directorio="$1"
+# Definir el directorio raíz (directorio base donde se encuentran los archivos .ogg y .jpg)
+path="$1"
 
-# Verificar si se pasó un directorio
-if [ -z "$directorio" ]; then
-    echo "Por favor, proporciona un directorio como argumento."
+# Verificar si el directorio existe
+if [ ! -d "$path" ]; then
+    echo "El directorio no existe: $path"
     exit 1
 fi
 
-# Verificar si el directorio es válido
-if [ ! -d "$directorio" ]; then
-    echo "El directorio proporcionado no es válido."
-    exit 1
-fi
+# Crear un archivo de log con el nombre que desees
+log_file="$path/command_log.txt"
+> "$log_file"  # Limpiar el archivo de log si ya existe
 
-# Archivo de log donde guardaremos los comandos ejecutados y los resultados
-log_file="$directorio/comandos_ejecutados.txt"
+# Crear un archivo de texto para guardar los paths completos
+paths_file="$path/paths.txt"
+> "$paths_file"  # Limpiar el archivo de paths si ya existe
 
-# Crear o limpiar el archivo de log
-echo "" > "$log_file"
+# Extraer los dos primeros caracteres del directorio raíz
+prefix=${path:0:2}
 
-# Función para imprimir en color rojo
-print_error() {
-    echo -e "\033[31m$1\033[0m"
-    echo "$1" >> "$log_file"  # Guardar en el log de errores
-}
+# Contar cuántos archivos .ogg existen
+total_files=$(find "$path" -type f -name "*.ogg" | wc -l)
+echo "Total de archivos .ogg encontrados: $total_files"
 
-# Función para imprimir en color verde
-print_success() {
-    echo -e "\033[32m$1\033[0m"
-    echo "$1" >> "$log_file"  # Guardar en el log de éxitos
-}
-
-# Recorrer el directorio y sus subdirectorios buscando archivos .ogg
-find "$directorio" -type f -iname "*.ogg" | sort | \
-while read archivo_ogg; do
-    # Obtener el nombre base del archivo OGG (sin la extensión)
-    nombre_sin_extension=$(basename "$archivo_ogg" .ogg)
+# Buscar archivos .ogg en todas las subcarpetas y recorrerlos
+find "$path" -type f -name "*.ogg" -print0 | while IFS= read -r -d '' ogg_file; do
+    # Verificar si el path comienza con "/". Si no, agregar el prefijo.
+    if [[ "${ogg_file:0:1}" != "/" ]]; then
+        ogg_file="$prefix$ogg_file"
+    fi
     
-    # Crear el nombre del archivo JPG con el mismo nombre base que el OGG
-    archivo_jpg="${archivo_ogg%.ogg}.jpg"
-    
-    # Verificar si el archivo JPG existe
-    if [ -f "$archivo_jpg" ]; then
-        # Registrar el comando kid3-cli en el archivo de log
-        comando="kid3-cli -c \"select all\" -c 'set picture:\"$archivo_jpg\" \"\"' \"$archivo_ogg\""
-        echo "$comando" >> "$log_file"
-        
-        # Ejecutar kid3-cli para agregar la carátula al archivo OGG
-        if kid3-cli -c "select all" -c "set picture:\"$archivo_jpg\" \"\" \"$archivo_ogg\""; then
-            # Si la operación fue exitosa
-            print_success "Éxito: Carátula agregada a '$archivo_ogg'."
-        else
-            # Si la operación falló
-            print_error "Error: No se pudo agregar la carátula a '$archivo_ogg'."
-        fi
+    # Guardar el path completo en el archivo de texto
+    echo "$ogg_file" >> "$paths_file"
 
-        # Eliminar el archivo JPG tras agregar la carátula
-        rm "$archivo_jpg"
+    # Crear la variable con el nombre del archivo de portada .jpg
+    jpg_file="${ogg_file%.ogg}.jpg"
+
+    # Crear el archivo temporal para el resultado
+    temp_file="${ogg_file%.ogg}_temp.ogg"
+
+    # Comando de ffmpeg que se ejecutará
+    ffmpeg_command="ffmpeg -y -i \"$ogg_file\" -i \"$jpg_file\" -c:a copy -id3v2_version 3 -metadata:s:v title=\"Portada\" -metadata:s:v comment=\"Imagen de portada\" \"$temp_file\""
+    
+    # Guardar el comando ejecutado en el archivo de log
+    echo "$ffmpeg_command" >> "$log_file"
+
+    # Ejecutar el comando ffmpeg sin guardar log
+    eval "$ffmpeg_command"
+
+    # Si el comando fue exitoso, reemplazar el archivo original con el archivo temporal
+    if [ $? -eq 0 ]; then
+        mv -f "$temp_file" "$ogg_file"  # Reemplazar el archivo original .ogg
+        rm "$jpg_file"  # Eliminar el archivo de portada .jpg (aunque no se haya encontrado)
+        echo "Portada añadida exitosamente a: $ogg_file"
+        echo "Archivo de portada eliminado: $jpg_file"
     else
-        # Si no se encuentra el archivo JPG correspondiente
-        print_error "Error: No se encontró el archivo JPG para '$archivo_ogg'."
+        echo "Error al procesar el archivo: $ogg_file"
     fi
 done
+
+# Contar el número de archivos procesados
+processed_files=$(find "$path" -type f -name "*.ogg" | wc -l)
+echo "Archivos procesados: $processed_files de $total_files"

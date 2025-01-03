@@ -45,27 +45,27 @@ sudo ./to_ogg/mp3extractimage.sh "$1"
 sudo ./to_ogg/dir2ogg_convert.sh "$1"
 
 # CAMBIO PERMISOS DE ARCHIVOS
-sudo chmod 777 -R "$1"
+sudo chmod 777 -R -v "$1"
 
-#sudo ./to_ogg/import_cover.sh "$1"
+sudo ./to_ogg/import_cover.sh "$1"
 #python ./to_ogg/import_cover.py "$1"
 
 
 # EJECUTO SCRIPT DE IMPORTACION DE TAPAS DE ALBUM DE MP3 Y CREACION DE ARCHIVO BASH
-sudo pwsh ./to_ogg/mp3script2.ps1 "$1"
+#sudo pwsh ./to_ogg/mp3script2.ps1 "$1"
 #sudo ./to_ogg/createfileimportjpg.sh "$1"
 
 # VOY A LA CARPETA DESTINO DEL BASH
 cd "$1"
 
 # CAMBIO PERMISOS DEL ARCHIVO BASH
-sudo chmod +x IMPORTALBUMCOVER.sh
+#sudo chmod +x IMPORTALBUMCOVER.sh
 
 # EJECUTO ARCHIVO BASH GENERADO DEL PUNTO 10
-sudo ./IMPORTALBUMCOVER.sh
+#sudo ./IMPORTALBUMCOVER.sh
 
 # ELIMINO EL ARCHIVO IMPORTALBUMCOVER.sh
-sudo rm IMPORTALBUMCOVER.sh
+#sudo rm IMPORTALBUMCOVER.sh
 
 # VOY A LA CARPETA DE SCRIPTS
 cd $ruta_actual

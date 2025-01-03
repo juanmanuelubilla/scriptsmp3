@@ -29,7 +29,7 @@ ruta_actual=$(pwd)
 echo "LA RUTA ESPECIFICADA ES: $1"
 
 # INSTALO LO QUE NECESITO
-sudo apt-get install faac ffmpeg dir2ogg gawk kid3-cli sysstat sysstat findutils flac lame mplayer libimage-exiftool-perl parallel bc y
+sudo apt-get install faac ffmpeg dir2ogg gawk kid3-cli sysstat sysstat findutils flac lame mplayer libimage-exiftool-perl parallel bc -y
 
 
 # VERIFICO E INSTALO POWERSHELL

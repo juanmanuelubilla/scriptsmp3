@@ -1,60 +1,44 @@
 #!/bin/bash
 
-# El directorio de entrada
-directorio="$1"
+# Verifica si se proporcionó el path de entrada
+if [ -z "$1" ]; then
+    echo "Uso: $0 <path>"
+    exit 1
+fi
 
-# Asegurar que el entorno use UTF-8
-export LC_ALL=C.UTF-8
-export LANG=C.UTF-8
+# Directorio base
+base_path="$1"
 
-# Función para eliminar caracteres no permitidos específicos
-sanitize_filename() {
-    # Reemplaza símbolos no permitidos con un guion bajo
-    echo "$1" | sed 's/[<>:"/\\|?*]//g'
-}
+# Verifica si el directorio existe
+if [ ! -d "$base_path" ]; then
+    echo "Error: El directorio '$base_path' no existe."
+    exit 1
+fi
 
-# Función para eliminar comillas simples en un nombre de archivo o carpeta
-remove_quotes() {
-    # Reemplaza comillas simples por acentos graves
-    echo "$1" | sed "s/'/´/g"
-}
+# Función para limpiar nombres
+clean_name() {
+    local original_name="$1"
+    local dir_name=$(dirname "$original_name")
+    local base_name=$(basename "$original_name")
 
-# Función para eliminar iconos no imprimibles
-remove_non_printable_chars() {
-    # Elimina caracteres no imprimibles y de control (excepto los permitidos como espacio, tabulación, salto de línea)
-    echo "$1" | tr -cd '\11\12\15\40-\176'
-}
+    # Reemplazar acentos por vocales sin acento
+    local cleaned_name=$(echo "$base_name" | sed -e 'y/áéíóúÁÉÍÓÚ/aeiouAEIOU/')
 
-# Función para eliminar caracteres no deseados pero preservando las vocales acentuadas
-remove_unwanted_characters() {
-    # Reemplaza caracteres no deseados por guiones bajos, pero preserva los acentos
-    echo "$1" | sed 's/[<>:"/\\|?*]//g'
-}
+    # Eliminar caracteres problemáticos para variables y mantener solo caracteres seguros
+    cleaned_name=$(echo "$cleaned_name" | tr -cd '[:alnum:]._-' | sed 's/[ ]/_/g')
 
-# Función para procesar archivos y carpetas
-process_files_and_dirs() {
-    # Buscar archivos y carpetas con los símbolos no permitidos
-    find "$directorio" -depth -print0 | while IFS= read -r -d '' item; do
-        # Obtener el nombre del archivo o carpeta y la ruta del directorio
-        nombre_item=$(basename "$item")
-        directorio_item=$(dirname "$item")
-        
-        # Aplicar funciones de saneamiento
-        nuevo_nombre=$(sanitize_filename "$nombre_item")
-        nuevo_nombre=$(remove_quotes "$nuevo_nombre")
-        nuevo_nombre=$(remove_unwanted_characters "$nuevo_nombre")
-        nuevo_nombre=$(remove_non_printable_chars "$nuevo_nombre")
-        
-        # Renombrar si el nombre cambia
-        if [ "$nombre_item" != "$nuevo_nombre" ]; then
-            if ! mv "$item" "$directorio_item/$nuevo_nombre"; then
-                echo "Error renombrando: $item"
-            else
-                echo "Renombrado: $item -> $directorio_item/$nuevo_nombre"
-            fi
+    # Renombrar si el nombre fue modificado
+    if [ "$base_name" != "$cleaned_name" ]; then
+        mv -n "$original_name" "$dir_name/$cleaned_name" 2>/dev/null
+        if [ $? -eq 0 ]; then
+            echo "Renombrado: '$original_name' -> '$dir_name/$cleaned_name'"
+        else
+            echo "Error al renombrar: '$original_name'"
         fi
-    done
+    fi
 }
 
-# Llamar a la función para procesar los archivos y carpetas
-process_files_and_dirs
+# Recorrer el directorio y procesar nombres de archivos y carpetas
+find "$base_path" -depth | while read -r path; do
+    clean_name "$path"
+done

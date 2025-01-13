@@ -32,6 +32,9 @@ echo "LA CALIDAD ESPECIFICADA PARA LOS M4A es $2"
 #INSTALO LO QUE NECESITO
 sudo apt-get install ffmpeg faac vorbis-tools atomicparsley mediainfo fdkaac parallel -y
 
+# EJECUTO ARCHIVO BASH PARA RENOMBRAR ARCHIVOS QUE TIENEN CARACTERES RAROS
+sudo ./to_ogg/mp3renombrar.sh "$1"
+
 #EXTRAIGO LOS COVER DE LOS ARCHIVOS OGG
 sudo ./to_m4a/oggextractimage.sh "$1"
 

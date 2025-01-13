@@ -24,8 +24,8 @@ clean_name() {
     # Reemplazar acentos por vocales sin acento
     local cleaned_name=$(echo "$base_name" | sed -e 'y/áéíóúÁÉÍÓÚ/aeiouAEIOU/')
 
-    # Eliminar caracteres problemáticos para variables y mantener solo caracteres seguros
-    cleaned_name=$(echo "$cleaned_name" | tr -cd '[:alnum:]._-' | sed 's/[ ]/_/g')
+    # Eliminar caracteres no imprimibles y problemáticos, excepto espacios
+    cleaned_name=$(echo "$cleaned_name" | tr -cd '[:alnum:][:space:]._-')
 
     # Renombrar si el nombre fue modificado
     if [ "$base_name" != "$cleaned_name" ]; then

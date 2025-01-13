@@ -30,28 +30,31 @@ echo "LA RUTA ESPECIFICADA ES: $1"
 echo "LA CALIDAD ESPECIFICADA PARA LOS M4A es $2"
 
 #INSTALO LO QUE NECESITO
-sudo apt-get install ffmpeg lame vorbis-tools atomicparsley mediainfo fdkaac parallel eyed3 id3v2 -y
+sudo apt-get install ffmpeg faac vorbis-tools atomicparsley mediainfo fdkaac parallel -y
 
 # EJECUTO ARCHIVO BASH PARA RENOMBRAR ARCHIVOS QUE TIENEN CARACTERES RAROS
 sudo ./to_ogg/mp3renombrar.sh "$1"
 
 #EXTRAIGO LOS COVER DE LOS ARCHIVOS OGG
-sudo ./to_mp3/oggextractimage.sh "$1"
+sudo ./mp3_to_m4a/mp3extractimage.sh "$1"
 
 #CONVIERTO LOS ARCHIVOS A M4A
-sudo ./to_mp3/oggconvert.sh "$1" 128
+sudo ./mp3_to_m4a/mp3convert.sh "$1" 96
 
 #IMPORTO LOS COVER A LOS M4A
-sudo ./to_mp3/oggimportimage.sh "$1"
+sudo ./mp3_to_m4a/mp3importimage.sh "$1"
 
 #IMPORTO LA METADATA
-sudo ./to_mp3/oggimportmetadata.sh "$1"
+#sudo ./mp3_to_m4a/mp3importmetadata.sh "$1"
 
 #BORRO TODOS LOS JPG
-sudo ./to_mp3/oggdeletecover.sh "$1"
+sudo ./mp3_to_m4a/mp3deletecover.sh "$1"
 
 
 #AGREGO ACA EL SCRIPT DE BORRADO OGG PARA NO HACER CAGADAS...
+
+#!/bin/bash
+
 # Verificar si se ha pasado un argumento (directorio)
 if [ -z "$1" ]; then
   echo "DEBES PROPORCIONAR UN DIRECTORIO COMO PARÁMETRO"
@@ -67,29 +70,36 @@ if [ ! -d "$root_directory" ]; then
   exit 1
 fi
 
-find "$root_directory" -type d
-
 # Buscar todos los archivos .ogg
-ogg_files=$(find "$root_directory" -type f -name "*.ogg")
+ogg_files=$(find "$root_directory" -type f -name "*.mp3")
 
 # Si no se encontraron archivos .ogg
 if [ -z "$ogg_files" ]; then
-  echo "NO SE ENCONTRARON ARCHIVOS .OGG EN '$root_directory'"
+  echo "NO SE ENCONTRARON ARCHIVOS .MP3 EN '$root_directory'"
   exit 0
 fi
 
 # Mostrar los archivos encontrados antes de eliminar
-echo "Se encontraron los siguientes archivos .OGG que serán eliminados:"
+echo "Se encontraron los siguientes archivos .MP3:"
 echo "$ogg_files"
 
-# Eliminar los archivos .ogg
-echo "ELIMINANDO LOS ARCHIVOS .OGG..."
-while IFS= read -r -d '' archivo; do
-  rm "$archivo" && echo "ELIMINADO: $archivo"
-done < <(find "$root_directory" -type f -name "*.ogg" -print0)
+# Mostrar el mensaje de confirmación
+echo -e "\e[31m¡¡¡ATENCIÓN!!! ESTÁS A PUNTO DE ELIMINAR LOS ARCHIVOS .MP3 EN '$root_directory'\e[0m"
+echo "¿DESEAS CONTINUAR? (y/n): "
+read respuesta
 
-echo "ELIMINACIÓN COMPLETA."
-
+# Si la respuesta es sí, eliminar los archivos .ogg
+if [[ "$respuesta" =~ ^[Yy]$ ]]; then
+  echo "ELIMINANDO LOS ARCHIVOS .MP3..."
+  # Recorrer los archivos encontrados
+  while IFS= read -r -d '' archivo; do
+    rm "$archivo" && echo "ELIMINADO: $archivo"
+  done < <(find "$root_directory" -type f -name "*.mp3" -print0)
+  
+  echo "ELIMINACIÓN COMPLETA."
+else
+  echo "NO SE ELIMINÓ NINGÚN ARCHIVO."
+fi
 
 
 # Registrar el tiempo final

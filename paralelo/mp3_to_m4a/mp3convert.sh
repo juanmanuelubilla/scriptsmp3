@@ -31,7 +31,7 @@ find "$DIRECTORIO_BASE" -type f -name "*.mp3" | xargs -P "$HILOS" -I {} bash -c 
     if [ $? -eq 0 ]; then
         echo "Conversión exitosa: $archivo_mp3 -> $archivo_m4a"
     else
-        echo "Error al convertir: $archivo_mp3" >> errores_conversion.log
-        exit 1
+        echo "Error al convertir: $archivo_mp3"
+        # exit 1
     fi
 '

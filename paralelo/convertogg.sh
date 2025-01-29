@@ -39,7 +39,8 @@ sudo ./to_ogg/install_powershell.sh
 sudo ./to_ogg/mp3renombrar.sh "$1"
 
 # EXTRAIGO EL COVER DEL ALBUM A UN ARCHIVO
-sudo ./to_ogg/mp3extractimage.sh "$1"
+#sudo ./to_ogg/mp3extractimage.sh "$1"
+sudo ../secuencial/to_ogg/mp3extractimage.sh "$1"
 
 # CONVIERTO CARPETAS A OGG
 sudo ./to_ogg/dir2ogg_convert.sh "$1"
@@ -87,6 +88,9 @@ cd $ruta_actual
 
 # EJECUTO SCRIPT DE RENOMBRADO DE NUMERO DE ARCHIVOS
 sudo ./to_ogg/renombrar1digito.sh "$1"
+
+# ELIMINO LOS TEMPORALES
+sudo ./to_ogg/delete_tmp.sh "$1"
 
 # VUELVO A DONDE ESTABA
 cd $ruta_actual

@@ -70,8 +70,9 @@ find "$dir" -type f -name "*.ogg" | while read -r file; do
     fi
 
     # (5) Si tiene el formato "[01] juanmanuel", eliminar los corchetes y agregar " -"
-    if [[ "$filename" =~ ^\[([0-9]{2})\]\ (.*\.ogg)$ ]]; then
-        newname="${BASH_REMATCH[1]} - ${BASH_REMATCH[2]}"
+    if [[ "$filename" =~ ^\([0-9]{2}\)(.*\.ogg)$ ]]; then
+        newname="${BASH_REMATCH[1]}"
+        newname="00 - ${newname:3}"  # Agregar el " -"
     fi
 
     # (6) Si el archivo empieza con un número del 1 al 9 seguido de "-", agregar un 0 al principio
@@ -79,7 +80,12 @@ find "$dir" -type f -name "*.ogg" | while read -r file; do
         newname="0${BASH_REMATCH[1]} - ${BASH_REMATCH[2]}"
     fi
 
-    # Renombrar el archivo si se cambió el nombre
+     # (7) Si el tercer carácter es una letra, agregar " - "
+    if [[ "$filename" =~ ^([0-9]{2})([a-zA-Z])(.*\.ogg)$ ]]; then
+        newname="${BASH_REMATCH[1]} - ${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
+    fi
+
+   # Renombrar el archivo si se cambió el nombre
     if [[ "$newname" != "$filename" ]]; then
         mv "$file" "$(dirname "$file")/$newname"
         if [ $? -ne 0 ]; then

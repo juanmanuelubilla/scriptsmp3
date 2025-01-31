@@ -42,7 +42,7 @@ function show_progress {
     echo -ne "[$bar$empty] $percent% ($progress/$total) \r"
 }
 
-# Buscar archivos .ogg que empiecen con 1-, 2-, ..., 9-
+# Buscar archivos .ogg que empiecen con 1-, 2-, ..., 9-, 01., 02., 001 -, 002 -, o 001., 002., etc.
 find "$dir" -type f -name "*.ogg" | while read -r file; do
     # Obtener el nombre del archivo sin la ruta
     filename=$(basename "$file")
@@ -65,7 +65,6 @@ find "$dir" -type f -name "*.ogg" | while read -r file; do
     show_progress $current_file $total_files
 done
 
-
 # Al finalizar, mostrar mensaje de error si hubo algún problema
 echo -e "\n" # Para mover la línea a una nueva
 if [ "$error_occurred" -eq 1 ]; then
@@ -82,4 +81,3 @@ seconds=$((duration % 60))
 echo "Duracion del proceso de remombrado: ${minutes}m ${seconds}s"
 echo ""
 echo -e "\033[1;36m+----------------------------------------------+\033[0m"
-#echo ""

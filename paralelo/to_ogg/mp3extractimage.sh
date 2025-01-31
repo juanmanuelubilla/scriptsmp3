@@ -34,15 +34,24 @@ if [ "$total_files" -eq 0 ]; then
     exit 0
 fi
 
+## Función para extraer el cover art de un archivo MP3
+#extract_cover() {
+#    local mp3_file="$1"
+#    local output_file="${mp3_file%.mp3}.jpg"
+#
+#    # Intentar extraer el cover art utilizando ffmpeg
+#    if ! ffmpeg -i "${mp3_file}" -an -vcodec copy "${output_file}" < /dev/null 2> /dev/null; then
+#        echo -e "\n\033[1;31mError al extraer el cover: ${mp3_file}\033[0m"
+#    fi
+#}
+
 # Función para extraer el cover art de un archivo MP3
 extract_cover() {
     local mp3_file="$1"
     local output_file="${mp3_file%.mp3}.jpg"
 
     # Intentar extraer el cover art utilizando ffmpeg
-    if ! ffmpeg -i "${mp3_file}" -an -vcodec copy "${output_file}" < /dev/null 2> /dev/null; then
-        echo -e "\n\033[1;31mError al extraer el cover: ${mp3_file}\033[0m"
-    fi
+    ffmpeg -i "${mp3_file}" -an -vcodec copy "${output_file}" < /dev/null 2> /dev/null
 }
 
 # Procesar los archivos uno por uno con una barra de progreso

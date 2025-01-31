@@ -1,5 +1,7 @@
 #!/bin/bash
 
+clear
+
 # Registrar el tiempo inicial
 start_time=$(date +%s)
 
@@ -15,7 +17,6 @@ if [ ! -d "$1" ]; then
   exit 1
 fi
 
-
 # Contar carpetas y archivos en el directorio proporcionado
 carpetas=$(find "$1" -type d | wc -l)
 archivos=$(find "$1" -type f | wc -l)
@@ -23,8 +24,19 @@ archivos=$(find "$1" -type f | wc -l)
 info="\nLA RUTA ESPECIFICADA ES: $1\nCARPETAS: $((carpetas - 1))\nARCHIVOS: $archivos"
 
 # Instalaciones automáticas
-sudo apt-get install faac ffmpeg dir2ogg gawk kid3-cli sysstat sysstat findutils flac lame mplayer libimage-exiftool-perl parallel bc -y
-sudo ./to_ogg/install_powershell.sh
+sudo apt-get install faac ffmpeg dir2ogg gawk kid3-cli sysstat sysstat findutils flac lame mplayer libimage-exiftool-perl parallel bc -y > /dev/null 2>&1
+sudo ./to_ogg/install_powershell.sh > /dev/null 2>&1
+
+
+#EJECUTANDO SCRIPT
+echo ""
+echo -e "\033[1;33mEJECUTANDO SCRIPT DE CONVERSION DE ARCHIVOS DE MP3 a OGG\033[0m"
+echo -e "\033[1;33m========================================================\033[0m"
+echo ""
+
+# Mostrar la hora de inicio en formato HH:MM:SS DD/MM/YYYY
+echo "Inicio del proceso: $(date '+%H:%M:%S %d/%m/%Y')"
+
 
 # Menú interactivo con whiptail
 opciones=$(whiptail --title "CONVERTIR MP3 A OGG" --checklist "$(echo -e "$info\n\nUsa la barra espaciadora para seleccionar/desmarcar y ENTER para confirmar:")" 20 78 8 \
@@ -34,19 +46,19 @@ opciones=$(whiptail --title "CONVERTIR MP3 A OGG" --checklist "$(echo -e "$info\
 "4" "Ejecutar importación de tapas de álbum" ON \
 "5" "Renombrar archivos con un solo dígito" ON 3>&1 1>&2 2>&3)
 
+# Verificar si el usuario canceló la operación
 if [ $? -ne 0 ]; then
   echo "Operación cancelada."
   exit 1
 fi
 
-# Convertir opciones seleccionadas en un array
-IFS=' ' read -r -a opciones <<< "$opciones"
+# Convertir las opciones seleccionadas en un array y eliminar comillas
+IFS=' ' read -r -a opciones <<< "$(echo $opciones | tr -d '"')"
 
 # Ejecutar las opciones seleccionadas
 for opcion in "${opciones[@]}"; do
   case $opcion in
     1)
-      echo "Renombrando archivos con caracteres raros..."
       sudo ./to_ogg/mp3renombrar.sh "$1"
       ;;
     2)
@@ -67,7 +79,7 @@ for opcion in "${opciones[@]}"; do
       sudo rm IMPORTALBUMCOVER*.sh
 
       echo "Eliminando archivos temporales..."
-      sudo ./to_ogg/delete_tmp.sh "$1"}
+      sudo ./to_ogg/delete_tmp.sh "$1"
       ;;
     5)
       echo "Renombrando archivos con un solo dígito..."

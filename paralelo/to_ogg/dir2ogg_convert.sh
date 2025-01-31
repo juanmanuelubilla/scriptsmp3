@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Registrar el tiempo inicial
+start_time=$(date +%s)
+
+echo ""
+echo -e "\033[1;36m+----------------------------------------------+\033[0m"
+echo -e "\033[1;36m|            CONVERTIR MP3 A OGG               |\033[0m"
+echo -e "\033[1;36m+----------------------------------------------+\033[0m"
+echo ""
+
+
 # Configuración
 NUM_THREADS=$(nproc) # Detectar núcleos disponibles
 TEMP_DIR="/tmp/dir2ogg" # Directorio temporal
@@ -49,5 +59,16 @@ export -f convert_file
 echo "Iniciando conversión en paralelo con $NUM_THREADS hilos..."
 xargs -0 -a <(tr '\n' '\0' < "$TEMP_DIR/files.txt") -n 1 -P "$NUM_THREADS" bash -c 'convert_file "$@"' _
 
-echo "Conversión completada."
+
+# Tiempo total de ejecución
+end_time=$(date +%s)
+duration=$((end_time - start_time))
+minutes=$((duration / 60))
+seconds=$((duration % 60))
+
+echo ""
+echo "Tiempo total: ${minutes}m ${seconds}s"
+echo ""
+echo -e "\033[1;36m+----------------------------------------------+\033[0m"
+echo ""
 

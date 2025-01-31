@@ -64,7 +64,8 @@ processed_files=0
 declare -a error_messages
 
 # Mostrar la barra de progreso
-echo -n "Procesando archivos: ["
+#echo -n "Procesando archivos: ["
+echo -n "["
 
 # Recorrer el directorio y procesar nombres de archivos y carpetas sin usar un subshell
 while IFS= read -r -d '' path; do
@@ -83,7 +84,7 @@ while IFS= read -r -d '' path; do
 
     # Mostrar la barra de progreso y los archivos procesados
     progress=$(printf "%-${percent}s" "#" | tr " " "#")
-    echo -ne "\rProcesando archivos: [${progress}$(printf "%-$((100-percent))s" " ")] $percent% (${processed_files}/${total_files})"
+    echo -ne "\r[${progress}$(printf "%-$((100-percent))s" " ")] $percent% (${processed_files}/${total_files})"
 done < <(find "$base_path" -depth -print0)
 
 # Terminar la barra de progreso
@@ -104,4 +105,4 @@ seconds=$((duration % 60))
 echo "Duracion del proceso de remombrado: ${minutes}m ${seconds}s"
 echo ""
 echo -e "\033[1;36m+----------------------------------------------+\033[0m"
-echo ""
+#echo ""

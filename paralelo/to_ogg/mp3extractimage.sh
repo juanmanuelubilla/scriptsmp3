@@ -41,25 +41,26 @@ extract_cover() {
 
     # Intentar extraer el cover art utilizando ffmpeg
     if ! ffmpeg -i "${mp3_file}" -an -vcodec copy "${output_file}" < /dev/null 2> /dev/null; then
-        # Si hay un error, imprimir en rojo
-        echo -e "\033[1;31mError al extraer el cover para: ${mp3_file}\033[0m"
-    else
-        # Si se extrae con éxito, imprimir el nombre del archivo procesado
-        echo "Cover extraído para: ${mp3_file}"
+        echo -e "\n\033[1;31mError al extraer el cover: ${mp3_file}\033[0m"
     fi
 }
 
-# Exportar la función para que xargs la use
-export -f extract_cover
+# Procesar los archivos uno por uno con una barra de progreso
+for i in "${!mp3_files[@]}"; do
+    mp3_file="${mp3_files[$i]}"
+    extract_cover "$mp3_file"
+    
+    # Calcular el porcentaje de progreso
+    progress=$(( (i + 1) * 100 / total_files ))
+    
+    # Imprimir la barra de progreso con el contador a la derecha
+    echo -ne "\r["
+    for ((j = 0; j < progress / 2; j++)); do echo -n "#"; done
+    for ((j = progress / 2; j < 50; j++)); do echo -n "-"; done
+    printf "] %3d%% (%d/%d)" "$progress" "$((i + 1))" "$total_files"
+done
 
-# Definir el número de hilos en paralelo (según los núcleos disponibles)
-NUM_THREADS=$(nproc)
-
-# Ejecutar el proceso en paralelo usando todos los núcleos disponibles
-printf "Procesando %d archivos con %d hilos...\n\n" "$total_files" "$NUM_THREADS"
-
-# Usar `xargs` para procesar los archivos en paralelo
-printf "%s\0" "${mp3_files[@]}" | xargs -0 -n 1 -P "$NUM_THREADS" bash -c 'extract_cover "$@"' _
+echo ""
 
 # Tiempo total de ejecución
 end_time=$(date +%s)
@@ -68,7 +69,7 @@ minutes=$((duration / 60))
 seconds=$((duration % 60))
 
 echo ""
-echo "Tiempo total: ${minutes}m ${seconds}s"
+echo "Duracion del proceso de extraccion: ${minutes}m ${seconds}s"
 echo ""
 echo -e "\033[1;36m+----------------------------------------------+\033[0m"
-echo ""
+#echo ""

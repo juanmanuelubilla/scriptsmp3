@@ -3,7 +3,7 @@
 clear
 
 # Registrar el tiempo inicial
-start_time=$(date +%s)
+start_time2=$(date +%s)
 
 # Verificar que se haya proporcionado un argumento
 if [ -z "$1" ]; then
@@ -36,10 +36,13 @@ echo ""
 
 # Mostrar la hora de inicio en formato HH:MM:SS DD/MM/YYYY
 echo "Inicio del proceso: $(date '+%H:%M:%S %d/%m/%Y')"
-
+echo ""
+echo "LA RUTA ESPECIFICADA ES: $1"
+echo "CARPETAS: $((carpetas - 1))"
+echo "ARCHIVOS: $archivos"
 
 # Menú interactivo con whiptail
-opciones=$(whiptail --title "CONVERTIR MP3 A OGG" --checklist "$(echo -e "$info\n\nUsa la barra espaciadora para seleccionar/desmarcar y ENTER para confirmar:")" 20 78 8 \
+opciones=$(whiptail --title "CONVERTIR MP3 A OGG" --checklist "$(echo -e "$info\n\nUsa la barra espaciadora para seleccionar/desmarcar y ENTER para confirmar:")" 20 90 5 \
 "1" "Renombrar archivos con caracteres raros" ON \
 "2" "Extraer cover del álbum" ON \
 "3" "Convertir carpetas a OGG" ON \
@@ -62,27 +65,56 @@ for opcion in "${opciones[@]}"; do
       sudo ./to_ogg/mp3renombrar.sh "$1"
       ;;
     2)
-      echo "Extrayendo cover del álbum..."
-      sudo ../secuencial/to_ogg/mp3extractimage.sh "$1"
+      sudo ./to_ogg/mp3extractimage.sh "$1"
       ;;
     3)
-      echo "Convirtiendo carpetas a OGG..."
       sudo ./to_ogg/dir2ogg_convert.sh "$1"
       ;;
     4)
-      echo "Cambiando permisos..."
-      sudo chmod 777 -R -v "$1"
+      # Registrar el tiempo inicial
+      start_time=$(date +%s)
+      
+      echo ""
+      echo -e "\033[1;36m+----------------------------------------------+\033[0m"
+      echo -e "\033[1;36m|       IMPORTACION DE COVERS A OGG...         |\033[0m"
+      echo -e "\033[1;36m+----------------------------------------------+\033[0m"
+      echo ""
+      
+      sudo chmod 777 -R -v "$1" > /dev/null 2>&1
 
-      echo "Ejecutando importación de tapas de álbum..."
+      echo "Creando archivos de importación de tapas de álbum..."
+      echo ""
+      
       sudo pwsh ./to_ogg/mp3script2-multiplesarchivos.ps1 "$1"
+      echo ""
+      
+      echo "Ejecutando archivos de importación de tapas de álbum..."
+      echo ""
+      
       find "$1" -type f -name "IMPORTALBUMCOVER*.sh" | xargs -I {} -P $(nproc) bash -c 'chmod +x "{}" && "{}"'
+      
+      cd $1
       sudo rm IMPORTALBUMCOVER*.sh
+      cd - > /dev/null 2>&1
 
+
+      echo ""
       echo "Eliminando archivos temporales..."
       sudo ./to_ogg/delete_tmp.sh "$1"
+
+      # Tiempo total de ejecución
+      end_time=$(date +%s)
+      duration=$((end_time - start_time))
+      minutes=$((duration / 60))
+      seconds=$((duration % 60))
+
+      echo ""
+      echo "Duracion del proceso de importacion de covers: ${minutes}m ${seconds}s"
+      echo ""
+      echo -e "\033[1;36m+----------------------------------------------+\033[0m"
+      #echo ""
       ;;
     5)
-      echo "Renombrando archivos con un solo dígito..."
       sudo ./to_ogg/renombrar1digito.sh "$1"
       ;;
     *)
@@ -93,7 +125,9 @@ done
 
 # Registrar el tiempo final
 end_time=$(date +%s)
-execution_time=$((end_time - start_time))
+execution_time=$((end_time - start_time2))
 execution_time_hours=$(echo "scale=2; $execution_time / 3600" | bc)
-echo -e "\033[1;36mEl script se completó en $execution_time segundos.\033[0m"
-echo -e "\033[1;36mEsto equivale a aproximadamente $execution_time_hours horas.\033[0m"
+echo ""
+echo "El script total se completó en $execution_time segundos"
+echo "Esto equivale a aproximadamente $execution_time_hours horas"
+echo ""

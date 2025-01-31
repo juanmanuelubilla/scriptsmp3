@@ -2,7 +2,7 @@ param (
     [string]$parametro1
 )
 
-write-host "GUARDANDO ARCHIVO EN: $parametro1"
+#write-host "GUARDANDO ARCHIVO EN: $parametro1"
 
 $PATHDESTINATION = $parametro1
 
@@ -13,7 +13,8 @@ try {
     if ($totalFiles -eq 0) {
         throw "No se encontraron archivos OGG en el directorio especificado."
     }
-    write-host "Total de archivos OGG encontrados: $totalFiles"
+    write-host "Archivos OGG encontrados: $totalFiles"
+    write-host ""
 } catch {
     write-host "Error: $_"
     exit 1
@@ -25,7 +26,7 @@ try {
     if ($availableThreads -eq 0) {
         throw "No se detectaron hilos disponibles en el sistema."
     }
-    write-host "Hilos disponibles: $availableThreads"
+    #write-host "Hilos disponibles: $availableThreads"
 } catch {
     write-host "Error: $_"
     exit 1
@@ -33,7 +34,7 @@ try {
 
 # Calcular archivos por hilo
 $filesPerThread = [math]::Ceiling($totalFiles / $availableThreads)
-write-host "Archivos por hilo: $filesPerThread"
+#write-host "Archivos por hilo: $filesPerThread"
 
 # Crear scripts por cada bloque de archivos
 for ($i = 0; $i -lt $availableThreads; $i++) {
@@ -72,7 +73,9 @@ for ($i = 0; $i -lt $availableThreads; $i++) {
         $movetmp = "sudo mv -f '$temp_file' '$full_ogg_file'"
 
         # Comando para importar la portada usando ffmpeg
-        $importcover = 'ffmpeg -y -i "' + $($file.FullName) + '" -i "' + $($folderemp3) + '/' + $($baseName) + '.jpg" -c:a copy -id3v2_version 3 -metadata:s:v title="Portada" -metadata:s:v comment="Imagen de portada" "' + $($temp_file) + '"'
+        #$importcover = 'ffmpeg -y -i "' + $($file.FullName) + '" -i "' + $($folderemp3) + '/' + $($baseName) + '.jpg" -c:a copy -id3v2_version 3 -metadata:s:v title="Portada" -metadata:s:v comment="Imagen de portada" "' + $($temp_file) + '"'
+        $importcover = 'ffmpeg -y -i "' + $($file.FullName) + '" -i "' + $($folderemp3) + '/' + $($baseName) + '.jpg" -c:a copy -id3v2_version 3 -metadata:s:v title="Portada" -metadata:s:v comment="Imagen de portada" "' + $($temp_file) + '" 2> /dev/null'
+
 
         # Echo para mostrar que se ha importado la portada
         $echoCommand = "echo COVER IMPORTADO: '$($folderemp3)/$($baseName).jpg'"
@@ -95,4 +98,5 @@ for ($i = 0; $i -lt $availableThreads; $i++) {
     }
 }
 
-write-host "Todos los scripts han sido generados exitosamente."
+#write-host "Todos los scripts han sido generados exitosamente."
+write-host ""

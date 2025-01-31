@@ -42,17 +42,46 @@ function show_progress {
     echo -ne "[$bar$empty] $percent% ($progress/$total) \r"
 }
 
-# Buscar archivos .ogg que empiecen con 1-, 2-, ..., 9-, 01., 02., 001 -, 002 -, o 001., 002., etc.
+# Buscar archivos .ogg y renombrarlos si es necesario
 find "$dir" -type f -name "*.ogg" | while read -r file; do
     # Obtener el nombre del archivo sin la ruta
     filename=$(basename "$file")
 
-    # Verificar si el nombre empieza con un número entre 1 y 9 seguido de " -"
+    newname="$filename"
+
+    # (1) Si empieza con un número del 1 al 9 seguido de " -", añadir un cero adelante
     if [[ "$filename" =~ ^([1-9])\ -.*\.ogg$ ]]; then
-        # Agregar un cero al número
         newname="0${BASH_REMATCH[1]} -${filename:3}"
+    fi
+
+    # (2) Si tiene dos dígitos seguidos de un espacio sin "-", agregar " - "
+    if [[ "$filename" =~ ^([0-9]{2})\ ([^ -].*\.ogg)$ ]]; then
+        newname="${BASH_REMATCH[1]} - ${BASH_REMATCH[2]}"
+    fi
+
+    # (3) Si el tercer carácter es "." y el cuarto no es un espacio, reemplazar "." por " - "
+    if [[ "$filename" =~ ^([0-9]{2})\.(.*\.ogg)$ ]]; then
+        newname="${BASH_REMATCH[1]} - ${BASH_REMATCH[2]}"
+    fi
+
+    # (4) Si el tercer y cuarto carácter son "- " y el quinto no es un espacio, reemplazar "- " por " - "
+    if [[ "$filename" =~ ^([0-9]{2})-([ ]?)(.*\.ogg)$ ]]; then
+        newname="${BASH_REMATCH[1]} - ${BASH_REMATCH[3]}"
+    fi
+
+    # (5) Si tiene el formato "[01] juanmanuel", eliminar los corchetes y agregar " -"
+    if [[ "$filename" =~ ^\[([0-9]{2})\]\ (.*\.ogg)$ ]]; then
+        newname="${BASH_REMATCH[1]} - ${BASH_REMATCH[2]}"
+    fi
+
+    # (6) Si el archivo empieza con un número del 1 al 9 seguido de "-", agregar un 0 al principio
+    if [[ "$filename" =~ ^([1-9])-\ (.*\.ogg)$ ]]; then
+        newname="0${BASH_REMATCH[1]} - ${BASH_REMATCH[2]}"
+    fi
+
+    # Renombrar el archivo si se cambió el nombre
+    if [[ "$newname" != "$filename" ]]; then
         mv "$file" "$(dirname "$file")/$newname"
-        # Si hay un error al renombrar, marcar error_occurred
         if [ $? -ne 0 ]; then
             error_occurred=1
         fi

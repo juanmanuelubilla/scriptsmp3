@@ -100,6 +100,7 @@ for opcion in "${opciones[@]}"; do
 
       echo ""
       echo "Eliminando archivos temporales..."
+	  echo ""
       sudo ./to_ogg/delete_tmp.sh "$1"
 
       # Tiempo total de ejecución

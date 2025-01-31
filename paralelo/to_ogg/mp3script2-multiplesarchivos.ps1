@@ -85,7 +85,8 @@ for ($i = 0; $i -lt $availableThreads; $i++) {
 
         # Crear la línea de comandos para el script
         
-        $scriptLine = "if $copytmp && $importcover; then echo 'COVER IMPORTADO: $($folderemp3)/$($baseName).jpg'; sudo rm '$($folderemp3)/$($baseName).jpg' && sudo mv -f '$($temp_file)' '$($file.FullName)'; else echo 'Error al agregar caratula: $($folderemp3)/$($baseName).jpg' >&2; fi"
+        #$scriptLine = "if $copytmp && $importcover; then echo 'COVER IMPORTADO: $($folderemp3)/$($baseName).jpg'; sudo rm '$($folderemp3)/$($baseName).jpg' && sudo mv -f '$($temp_file)' '$($file.FullName)'; else echo 'Error al agregar caratula: $($folderemp3)/$($baseName).jpg' >&2; fi"
+        $scriptLine = "if $copytmp && $importcover; then sudo rm '$($folderemp3)/$($baseName).jpg' && sudo mv -f '$($temp_file)' '$($file.FullName)'; else echo -e '\e[31mError al agregar carátula: $folderemp3/$baseName.jpg\e[0m' >&2; fi"
         #$scriptLine = "$copytmp && $importcover && $echoCommand && $removeCommand && $movetmp"
 
         # Agregar los comandos al archivo del script

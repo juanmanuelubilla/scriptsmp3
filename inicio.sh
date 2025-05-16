@@ -37,8 +37,18 @@ function copiar_si_corresponde() {
     whiptail --title "Copiando archivos" --infobox "Copiando de:\n$ORIGEN\n→ $DESTINO..." 10 60
     sleep 1
 
-    rsync -a --info=progress2 "$ORIGEN"/ "$DESTINO"/ 2>&1 | \
-      stdbuf -oL cut -b -60 | whiptail --title "Progreso de Copia" --gauge "Iniciando..." 10 70 0
+    rsync -a --info=progress2 "$ORIGEN"/ "$DESTINO"/ 2>&1 | stdbuf -oL \
+    awk '
+      {
+        for(i=1;i<=NF;i++) {
+          if ($i ~ /[0-9]+%/) {
+            gsub(/%/,"",$i)
+            print $i
+            fflush()
+          }
+        }
+      }
+    ' | whiptail --title "Progreso de Copia" --gauge "Copiando archivos..." 10 70 0
 
     if [ $? -ne 0 ]; then
       whiptail --title "Error" --msgbox "Fallo al copiar archivos a $DESTINO." 10 60

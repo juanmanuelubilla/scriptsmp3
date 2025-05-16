@@ -2,6 +2,13 @@
 
 clear
 
+if [[ "$EUID" -ne 0 ]]; then
+  echo "Este script debe ejecutarse como root"
+  exit 1
+fi
+
+
+
 # Registrar el tiempo inicial
 start_time2=$(date +%s)
 
@@ -24,8 +31,11 @@ archivos=$(find "$1" -type f | wc -l)
 info="\nLA RUTA ESPECIFICADA ES: $1\nCARPETAS: $((carpetas - 1))\nARCHIVOS: $archivos"
 
 # Instalaciones automáticas
-sudo apt-get install faac ffmpeg dir2ogg gawk kid3-cli sysstat sysstat findutils flac lame mplayer libimage-exiftool-perl parallel bc -y > /dev/null 2>&1
-sudo ./to_ogg/install_powershell.sh > /dev/null 2>&1
+apt-get install faac ffmpeg dir2ogg gawk kid3-cli sysstat sysstat findutils flac lame mplayer libimage-exiftool-perl parallel bc -y > /dev/null 2>&1
+#whiptail --title "Instalando dependencias" --infobox "Instalando paquetes necesarios..." 8 50
+apt-get install faac ffmpeg dir2ogg gawk kid3-cli sysstat findutils flac lame mplayer libimage-exiftool-perl parallel bc -y > /dev/null 2>&1
+
+./to_ogg/install_powershell.sh > /dev/null 2>&1
 
 
 #EJECUTANDO SCRIPT
@@ -42,12 +52,14 @@ echo "CARPETAS: $((carpetas - 1))"
 echo "ARCHIVOS: $archivos"
 
 # Menú interactivo con whiptail
-opciones=$(whiptail --title "CONVERTIR MP3 A OGG" --checklist "$(echo -e "$info\n\nUsa la barra espaciadora para seleccionar/desmarcar y ENTER para confirmar:")" 20 90 5 \
+opciones=$(whiptail --title "CONVERTIR MP3 A OGG" --checklist "$(echo -e "$info\n\nUsa la barra espaciadora para seleccionar/desmarcar y ENTER para confirmar:")" 20 100 6 \
 "1" "Renombrar archivos con caracteres raros" ON \
 "2" "Extraer cover del álbum" ON \
 "3" "Convertir carpetas a OGG" ON \
 "4" "Ejecutar importación de tapas de álbum" ON \
-"5" "Renombrar archivos con un solo dígito" ON 3>&1 1>&2 2>&3)
+"5" "Renombrar archivos con un solo dígito" ON \
+"6" "Buscar Tags de Nombre / Album / Artista en archivos sin tags" OFF 3>&1 1>&2 2>&3)
+
 
 # Verificar si el usuario canceló la operación
 if [ $? -ne 0 ]; then
@@ -62,13 +74,13 @@ IFS=' ' read -r -a opciones <<< "$(echo $opciones | tr -d '"')"
 for opcion in "${opciones[@]}"; do
   case $opcion in
     1)
-      sudo ./to_ogg/mp3renombrar.sh "$1"
+      ./to_ogg/mp3renombrar.sh "$1"
       ;;
     2)
-      sudo ./to_ogg/mp3extractimage.sh "$1"
+      ./to_ogg/mp3extractimage.sh "$1"
       ;;
     3)
-      sudo ./to_ogg/dir2ogg_convert.sh "$1"
+      ./to_ogg/dir2ogg_convert.sh "$1"
       ;;
     4)
       # Registrar el tiempo inicial
@@ -80,12 +92,12 @@ for opcion in "${opciones[@]}"; do
       echo -e "\033[1;36m+----------------------------------------------+\033[0m"
       echo ""
       
-      sudo chmod 777 -R -v "$1" > /dev/null 2>&1
+      chmod 777 -R -v "$1" > /dev/null 2>&1
 
       echo "Creando archivos de importación de tapas de álbum..."
       echo ""
       
-      sudo pwsh ./to_ogg/mp3script2-multiplesarchivos.ps1 "$1"
+      pwsh ./to_ogg/mp3script2-multiplesarchivos.ps1 "$1"
       echo ""
       
       echo "Ejecutando archivos de importación de tapas de álbum..."
@@ -94,14 +106,14 @@ for opcion in "${opciones[@]}"; do
       find "$1" -type f -name "IMPORTALBUMCOVER*.sh" | xargs -I {} -P $(nproc) bash -c 'chmod +x "{}" && "{}"'
       
       cd $1
-      sudo rm IMPORTALBUMCOVER*.sh
+      rm IMPORTALBUMCOVER*.sh
       cd - > /dev/null 2>&1
 
 
       echo ""
       echo "Eliminando archivos temporales..."
 	  echo ""
-      sudo ./to_ogg/delete_tmp.sh "$1"
+      ./to_ogg/delete_tmp.sh "$1"
 
       # Tiempo total de ejecución
       end_time=$(date +%s)
@@ -116,10 +128,29 @@ for opcion in "${opciones[@]}"; do
       #echo ""
       ;;
     5)
-      sudo ./to_ogg/renombrar1digito.sh "$1"
+      ./to_ogg/renombrar1digito.sh "$1"
       ;;
     *)
       echo "Opción no válida: $opcion"
+      ;;
+    6)
+      # Registrar el tiempo inicial
+      start_time=$(date +%s)
+      
+      echo ""
+      echo -e "\033[1;36m+----------------------------------------------+\033[0m"
+      echo -e "\033[1;36m|     Buscando TAGS en archivos huerfanos      |\033[0m"
+      echo -e "\033[1;36m+----------------------------------------------+\033[0m"
+      echo ""
+      
+      beet import "$1"
+
+      # Tiempo total de ejecución
+      end_time=$(date +%s)
+      duration=$((end_time - start_time))
+      minutes=$((duration / 60))
+      seconds=$((duration % 60))
+
       ;;
   esac
 done

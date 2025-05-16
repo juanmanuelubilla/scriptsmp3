@@ -68,7 +68,7 @@ while true; do
   MENU_MSG="ORIGEN: $ORIGEN\nDESTINO: ${DESTINO:-(no definido)}\n\nPATH FINAL: $PATH_FINAL\n\nSeleccione una opción:"
   OPCION=$(whiptail --title "CONVERSIÓN DE AUDIO" --menu "$MENU_MSG" 20 70 10 \
     "1" "Convertir MP3 a OGG" \
-    "2" "Script B - Conversión de audio" \
+    "2" "Convertir OGG a M4A para el auto" \
     "3" "Script C - Análisis de carpetas" \
     " " " " \
     "4" "Editar ruta de ORIGEN" \

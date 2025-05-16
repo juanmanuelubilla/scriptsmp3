@@ -130,17 +130,15 @@ for opcion in "${opciones[@]}"; do
     5)
       ./to_ogg/renombrar1digito.sh "$1"
       ;;
-    *)
-      echo "Opción no válida: $opcion"
-      ;;
     6)
       # Registrar el tiempo inicial
       start_time=$(date +%s)
       
       echo ""
-      echo -e "\033[1;36m+----------------------------------------------+\033[0m"
-      echo -e "\033[1;36m|     Buscando TAGS en archivos huerfanos      |\033[0m"
-      echo -e "\033[1;36m+----------------------------------------------+\033[0m"
+      echo -e "\033[1;36m+-------------------------------------------------------+\033[0m"
+      echo -e "\033[1;36m|        Buscando TAGS en archivos huerfanos            |\033[0m"
+      echo -e "\033[1;36m| Los archivos modificados se copiaran a \home\pi\Music |\033[0m"
+      echo -e "\033[1;36m+-------------------------------------------------------+\033[0m"
       echo ""
       
       beet import "$1"
@@ -152,6 +150,10 @@ for opcion in "${opciones[@]}"; do
       seconds=$((duration % 60))
 
       ;;
+    *)
+      echo "Opción no válida: $opcion"
+      ;;
+      
   esac
 done
 

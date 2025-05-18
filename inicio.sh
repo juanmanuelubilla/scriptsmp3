@@ -3,7 +3,7 @@
 clear
 
 if [[ "$EUID" -ne 0 ]]; then
-  echo "Este script debe ejecutarse como root"
+  echo "Este script debe ejecutarse como root: 'sudo ./inicio.sh'"
   exit 1
 fi
 
@@ -69,7 +69,7 @@ while true; do
   OPCION=$(whiptail --title "CONVERSIÓN DE AUDIO" --menu "$MENU_MSG" 20 70 10 \
     "1" "Convertir MP3 a OGG" \
     "2" "Convertir OGG a M4A para el auto" \
-    "3" "Script C - Análisis de carpetas" \
+    "3" "Convertir MP3 a M4A para el auto" \
     " " " " \
     "4" "Editar ruta de ORIGEN" \
     "5" "Editar ruta de DESTINO" \
@@ -81,8 +81,8 @@ while true; do
       copiar_si_corresponde
       case $OPCION in
         1) ./convertogg.sh "$PATH_FINAL"; exit 0 ;;
-        2) ./scripts/script_b.sh "$PATH_FINAL"; exit 0 ;;
-        3) ./scripts/script_c.sh "$PATH_FINAL"; exit 0 ;;
+        2) ./convertm4a.sh "$PATH_FINAL"; exit 0 ;;
+        3) ./convertmp3_to_m4a.sh "$PATH_FINAL"; exit 0 ;;
       esac
       ;;
     4)

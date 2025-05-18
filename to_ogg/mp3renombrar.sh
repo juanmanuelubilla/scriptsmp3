@@ -9,7 +9,6 @@ echo -e "\033[1;36m| RENOMBRANDO ARCHIVOS CON CARACTERES RAROS... |\033[0m"
 echo -e "\033[1;36m+----------------------------------------------+\033[0m"
 echo ""
 
-
 # Verifica si se proporcionó el path de entrada
 if [ -z "$1" ]; then
     echo "Uso: $0 <path>"
@@ -63,28 +62,21 @@ fi
 processed_files=0
 declare -a error_messages
 
-# Mostrar la barra de progreso
-#echo -n "Procesando archivos: ["
-echo -n "["
+# Ancho de la barra de progreso
+bar_width=50
 
-# Recorrer el directorio y procesar nombres de archivos y carpetas sin usar un subshell
+# Procesar archivos
 while IFS= read -r -d '' path; do
     clean_name "$path"
-    
-    # Incrementar el contador de archivos procesados
     ((processed_files++))
-    
-    # Calcular el porcentaje
-    percent=$(( (processed_files * 100) / total_files ))
 
-    # Limitar el porcentaje a 100% máximo
-    if [ "$percent" -gt 100 ]; then
-        percent=100
-    fi
+    percent=$((processed_files * 100 / total_files))
+    progress_chars=$((processed_files * bar_width / total_files))
 
-    # Mostrar la barra de progreso y los archivos procesados
-    progress=$(printf "%-${percent}s" "#" | tr " " "#")
-    echo -ne "\r[${progress}$(printf "%-$((100-percent))s" " ")] $percent% (${processed_files}/${total_files})"
+    bar=$(printf "%-${progress_chars}s" "#" | tr " " "#")
+    spaces=$(printf "%-$((bar_width - progress_chars))s" " ")
+
+    echo -ne "\r[${bar}${spaces}] ${percent}% (${processed_files}/${total_files})"
 done < <(find "$base_path" -depth -print0)
 
 # Terminar la barra de progreso
@@ -102,7 +94,6 @@ minutes=$((duration / 60))
 seconds=$((duration % 60))
 
 # Mostrar tiempo total de ejecución
-echo "Duracion del proceso de remombrado: ${minutes}m ${seconds}s"
+echo "Duración del proceso de renombrado: ${minutes}m ${seconds}s"
 echo ""
 echo -e "\033[1;36m+----------------------------------------------+\033[0m"
-#echo ""

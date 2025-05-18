@@ -7,8 +7,6 @@ if [[ "$EUID" -ne 0 ]]; then
   exit 1
 fi
 
-
-
 # Registrar el tiempo inicial
 start_time2=$(date +%s)
 
@@ -31,8 +29,6 @@ archivos=$(find "$1" -type f | wc -l)
 info="\nLA RUTA ESPECIFICADA ES: $1\nCARPETAS: $((carpetas - 1))\nARCHIVOS: $archivos"
 
 # Instalaciones automáticas
-apt-get install faac ffmpeg dir2ogg gawk kid3-cli sysstat sysstat findutils flac lame mplayer libimage-exiftool-perl parallel bc -y > /dev/null 2>&1
-#whiptail --title "Instalando dependencias" --infobox "Instalando paquetes necesarios..." 8 50
 apt-get install faac ffmpeg dir2ogg gawk kid3-cli sysstat findutils flac lame mplayer libimage-exiftool-perl parallel bc -y > /dev/null 2>&1
 
 ./to_ogg/install_powershell.sh > /dev/null 2>&1

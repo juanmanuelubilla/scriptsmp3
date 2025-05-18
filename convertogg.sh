@@ -36,6 +36,7 @@ apt-get install faac ffmpeg dir2ogg gawk kid3-cli sysstat findutils flac lame mp
 
 #EJECUTANDO SCRIPT
 echo ""
+echo -e "\033[1;33m========================================================\033[0m"
 echo -e "\033[1;33mEJECUTANDO SCRIPT DE CONVERSION DE ARCHIVOS DE MP3 a OGG\033[0m"
 echo -e "\033[1;33m========================================================\033[0m"
 echo ""

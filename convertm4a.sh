@@ -22,7 +22,7 @@ if [ ! -d "$1" ]; then
 fi
 
 DIRECTORIO="$1"
-CALIDAD="${2:-96}"  # Si no se pasa calidad, usar 96 por defecto
+CALIDAD="${3:-128}"  # Si no se pasa calidad, usar 96 por defecto
 
 # Función para instalar dependencias
 instalar_dependencias() {

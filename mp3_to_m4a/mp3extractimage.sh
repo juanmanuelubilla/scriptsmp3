@@ -1,52 +1,67 @@
 #!/bin/bash
 
-# Función para extraer el cover de un archivo MP3
-extract_cover() {
-    input_file="$1"
-    output_file="${input_file%.mp3}.jpg"
-    
-    # Extraer el cover art y redirigir errores a /dev/null
-    ffmpeg -i "$input_file" -an -vcodec copy "$output_file" 2>/dev/null
+start_time=$(date +%s)
 
-    # Verificar si ffmpeg tuvo éxito
-    if [ $? -eq 0 ]; then
-        echo "Cover extraído de: $input_file"
-    else
-        echo "No se pudo extraer el cover de: $input_file"
-    fi
-}
+echo ""
+echo -e "\033[1;36m+----------------------------------------------+\033[0m"
+echo -e "\033[1;36m|        EXTRACCION DE COVERS EN MP3...        |\033[0m"
+echo -e "\033[1;36m+----------------------------------------------+\033[0m"
+echo ""
 
-# Función para recorrer las carpetas y subcarpetas y extraer los covers en paralelo
+if [ -z "$1" ]; then
+    echo "Uso: $0 <path>"
+    exit 1
+fi
+
+base_path="$1"
+
+if [ ! -d "$base_path" ]; then
+    echo -e "\033[1;33mError: El directorio '$base_path' no existe.\033[0m"
+    exit 1
+fi
+
+if ! command -v ffmpeg &> /dev/null; then
+    echo -e "\033[1;31mError: ffmpeg no está instalado. Instálalo e intenta de nuevo.\033[0m"
+    exit 1
+fi
+
+NUM_THREADS=$(nproc)
+
 process_directory() {
     local dir="$1"
     local ext=".mp3"
 
-    # Encontrar todos los archivos MP3 y procesarlos en paralelo con xargs
-    find "$dir" -type f -name "*$ext" -print0 | xargs -0 -n 1 -P "$NUM_THREADS" bash -c '
-        input_file="$1"
-        output_file="${input_file%.mp3}.jpg"
-        ffmpeg -i "$input_file" -an -vcodec copy "$output_file" 2>/dev/null
-        if [ $? -eq 0 ]; then
-            echo "Cover extraído de: $input_file"
-        else
-            echo "No se pudo extraer el cover de: $input_file"
-        fi
-    ' _
+    find "$dir" -type f -name "*$ext" -print0 | \
+    while IFS= read -r -d '' input_file; do
+        (
+            output_file="${input_file%.mp3}.jpg"
+            ffmpeg -i "$input_file" -an -vcodec copy "$output_file" 2>/dev/null
+
+            if [ -s "$output_file" ]; then
+                echo "Cover extraído de: $input_file"
+            else
+                [ -f "$output_file" ] && rm "$output_file"
+                echo -e "\033[1;31mNo se encontró cover en: $input_file\033[0m"
+            fi
+        ) &
+
+        while [ "$(jobs -r | wc -l)" -ge "$NUM_THREADS" ]; do
+            sleep 0.1
+        done
+    done
+
+    wait
 }
 
-# Directorio raíz desde donde se ejecutará el script
-root_directory="$1"
-
-# Validar que se haya proporcionado un directorio
-if [ -z "$root_directory" ]; then
-    echo "Uso: $0 <directorio_raíz>"
-    exit 1
-fi
-
-# Obtener el número de núcleos del procesador
-NUM_THREADS=$(nproc)
-
-# Ejecutar la función para recorrer las carpetas y extraer los covers
-process_directory "$root_directory"
+process_directory "$base_path"
 
 echo "Extracción de covers completada."
+
+end_time=$(date +%s)
+duration=$((end_time - start_time))
+minutes=$((duration / 60))
+seconds=$((duration % 60))
+
+echo "Duración del proceso de extracción: ${minutes}m ${seconds}s"
+echo ""
+echo -e "\033[1;36m+----------------------------------------------+\033[0m"

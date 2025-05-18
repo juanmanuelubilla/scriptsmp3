@@ -55,6 +55,8 @@ process_directory() {
 
 process_directory "$base_path"
 
+sleep 2
+
 echo "Extracción de covers completada."
 
 end_time=$(date +%s)
@@ -65,3 +67,4 @@ seconds=$((duration % 60))
 echo "Duración del proceso de extracción: ${minutes}m ${seconds}s"
 echo ""
 echo -e "\033[1;36m+----------------------------------------------+\033[0m"
+

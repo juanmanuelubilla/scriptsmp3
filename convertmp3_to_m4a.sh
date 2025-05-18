@@ -19,12 +19,7 @@ fi
 
 DIR="$1"
 
-# Pedir calidad M4A
-CALIDAD=$(whiptail --inputbox "Ingresa la calidad para M4A (ej: 96):" 10 60 --title "Calidad M4A" 3>&1 1>&2 2>&3)
-if [ $? -ne 0 ] || [ -z "$CALIDAD" ]; then
-  echo "No se ingresó calidad. Saliendo."
-  exit 1
-fi
+# *** Eliminar la petición de calidad M4A ***
 
 # Instalar paquetes sin preguntar
 echo "Instalando paquetes necesarios..."
@@ -80,7 +75,7 @@ for opt in "${opciones[@]}"; do
       ./mp3_to_m4a/mp3extractimage.sh "$DIR"
       ;;
     3)
-      ./mp3_to_m4a/mp3convert.sh "$DIR" "$CALIDAD"
+      ./mp3_to_m4a/mp3convert.sh "$DIR"
       ;;
     4)
       ./mp3_to_m4a/mp3importimage.sh "$DIR"
@@ -89,17 +84,16 @@ for opt in "${opciones[@]}"; do
       ./mp3_to_m4a/mp3deletecover.sh "$DIR"
       ;;
     6)
-
       start_time=$(date +%s)
-      
+
       echo ""
       echo -e "\033[1;36m+----------------------------------------------+\033[0m"
       echo -e "\033[1;36m|            BORRAR ARCHIVOS MP3...            |\033[0m"
       echo -e "\033[1;36m+----------------------------------------------+\033[0m"
       echo ""
-      
+
       mp3_files=$(find "$DIR" -type f -name "*.mp3")
-      
+
       if [ -z "$mp3_files" ]; then
         echo "No se encontraron archivos .mp3 en $DIR"
       else
@@ -121,17 +115,17 @@ for opt in "${opciones[@]}"; do
       minutes=$((duration / 60))
       seconds=$((duration % 60))
       echo "Archivos eliminados en: ${minutes}m ${seconds}s"
-      ;;  # Aquí estaba el problema, agregué el cierre del case
+      ;;
     7)
       start_time=$(date +%s)
-      
+
       echo ""
       echo -e "\033[1;36m+-------------------------------------------------------+\033[0m"
       echo -e "\033[1;36m|        Buscando TAGS en archivos huerfanos            |\033[0m"
       echo -e "\033[1;36m| Los archivos modificados se copiarán a /home/pi/Music |\033[0m"
       echo -e "\033[1;36m+-------------------------------------------------------+\033[0m"
       echo ""
-      
+
       beet import "$DIR"
 
       end_time=$(date +%s)

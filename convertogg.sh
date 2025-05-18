@@ -80,39 +80,41 @@ for opcion in "${opciones[@]}"; do
       ./to_ogg/dir2ogg_convert.sh "$1"
       ;;
     4)
-      # Registrar el tiempo inicial
       start_time=$(date +%s)
-      
       echo ""
       echo -e "\033[1;36m+----------------------------------------------+\033[0m"
       echo -e "\033[1;36m|       IMPORTACION DE COVERS A OGG...         |\033[0m"
       echo -e "\033[1;36m+----------------------------------------------+\033[0m"
       echo ""
-      
+
+      # Verificar que existan archivos OGG antes de continuar
+      if ! find "$1" -type f -name "*.ogg" | grep -q .; then
+        echo -e "\033[1;31mError: No se encontraron archivos OGG en el directorio especificado.\033[0m"
+        exit 1
+      fi
+
       chmod 777 -R -v "$1" > /dev/null 2>&1
 
       echo "Creando archivos de importación de tapas de álbum..."
       echo ""
-      
+
       pwsh ./to_ogg/mp3script2-multiplesarchivos.ps1 "$1"
       echo ""
-      
+
       echo "Ejecutando archivos de importación de tapas de álbum..."
       echo ""
-      
-      find "$1" -type f -name "IMPORTALBUMCOVER*.sh" | xargs -I {} -P $(nproc) bash -c 'chmod +x "{}" && "{}"'
-      
-      cd $1
-      rm IMPORTALBUMCOVER*.sh
-      cd - > /dev/null 2>&1
 
+      find "$1" -type f -name "IMPORTALBUMCOVER*.sh" | xargs -I {} -P $(nproc) bash -c 'chmod +x "{}" && "{}"'
+
+      cd "$1"
+      rm -f IMPORTALBUMCOVER*.sh
+      cd - > /dev/null 2>&1
 
       echo ""
       echo "Eliminando archivos temporales..."
-	  echo ""
+      echo ""
       ./to_ogg/delete_tmp.sh "$1"
 
-      # Tiempo total de ejecución
       end_time=$(date +%s)
       duration=$((end_time - start_time))
       minutes=$((duration / 60))
@@ -122,35 +124,29 @@ for opcion in "${opciones[@]}"; do
       echo "Duracion del proceso de importacion de covers: ${minutes}m ${seconds}s"
       echo ""
       echo -e "\033[1;36m+----------------------------------------------+\033[0m"
-      #echo ""
       ;;
     5)
       ./to_ogg/renombrar1digito.sh "$1"
       ;;
     6)
-      # Registrar el tiempo inicial
       start_time=$(date +%s)
-      
       echo ""
       echo -e "\033[1;36m+-------------------------------------------------------+\033[0m"
       echo -e "\033[1;36m|        Buscando TAGS en archivos huerfanos            |\033[0m"
       echo -e "\033[1;36m| Los archivos modificados se copiaran a \home\pi\Music |\033[0m"
       echo -e "\033[1;36m+-------------------------------------------------------+\033[0m"
       echo ""
-      
+
       beet import "$1"
 
-      # Tiempo total de ejecución
       end_time=$(date +%s)
       duration=$((end_time - start_time))
       minutes=$((duration / 60))
       seconds=$((duration % 60))
-
       ;;
     *)
       echo "Opción no válida: $opcion"
       ;;
-      
   esac
 done
 

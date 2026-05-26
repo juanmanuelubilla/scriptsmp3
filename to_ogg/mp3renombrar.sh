@@ -62,25 +62,18 @@ fi
 processed_files=0
 declare -a error_messages
 
-# Ancho de la barra de progreso
-bar_width=50
+_REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/ui_common.sh
+source "$_REPO_ROOT/lib/ui_common.sh"
 
 # Procesar archivos
 while IFS= read -r -d '' path; do
     clean_name "$path"
     ((processed_files++))
-
-    percent=$((processed_files * 100 / total_files))
-    progress_chars=$((processed_files * bar_width / total_files))
-
-    bar=$(printf "%-${progress_chars}s" "#" | tr " " "#")
-    spaces=$(printf "%-$((bar_width - progress_chars))s" " ")
-
-    echo -ne "\r[${bar}${spaces}] ${percent}% (${processed_files}/${total_files})"
+    ui_bar_render "$processed_files" "$total_files"
 done < <(find "$base_path" -depth -print0)
 
-# Terminar la barra de progreso
-echo -e "\n"
+ui_bar_finish
 
 # Mostrar los errores si los hubo
 for error in "${error_messages[@]}"; do

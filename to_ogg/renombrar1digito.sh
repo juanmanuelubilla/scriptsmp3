@@ -29,18 +29,9 @@ total_files=$(find "$dir" -type f -name "*.ogg" | wc -l)
 current_file=0
 error_occurred=0
 
-# Función para mostrar la barra de progreso
-function show_progress {
-    local progress=$1
-    local total=$2
-    local percent=$((progress * 100 / total))
-    local bar_length=50
-    local filled_length=$((percent * bar_length / 100))
-    local empty_length=$((bar_length - filled_length))
-    local bar=$(printf "%-${filled_length}s" "#" | tr ' ' '#')
-    local empty=$(printf "%-${empty_length}s" " " | tr ' ' ' ')
-    echo -ne "[$bar$empty] $percent% ($progress/$total) \r"
-}
+_REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/ui_common.sh
+source "$_REPO_ROOT/lib/ui_common.sh"
 
 # Buscar archivos .ogg y renombrarlos si es necesario
 find "$dir" -type f -name "*.ogg" | while read -r file; do
@@ -97,11 +88,12 @@ find "$dir" -type f -name "*.ogg" | while read -r file; do
     current_file=$((current_file + 1))
     
     # Mostrar la barra de progreso
-    show_progress $current_file $total_files
+    ui_bar_render "$current_file" "$total_files"
 done
 
+ui_bar_finish
+
 # Al finalizar, mostrar mensaje de error si hubo algún problema
-echo -e "\n" # Para mover la línea a una nueva
 if [ "$error_occurred" -eq 1 ]; then
     echo -e "\033[1;31mHubo un error durante el renombrado de algunos archivos.\033[0m"
 fi

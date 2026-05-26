@@ -22,7 +22,15 @@ process_directory() {
     local ext=".ogg"
 
     # Encontrar todos los archivos OGG y procesarlos en paralelo con xargs
-    find "$dir" -type f -name "*$ext" -print0 | xargs -0 -n 1 -P "$NUM_THREADS" bash -c 'input_file="$1"; output_file="${input_file%.ogg}.jpg"; ffmpeg -i "$input_file" -an -vcodec copy "$output_file" 2>/dev/null; if [ $? -eq 0 ]; then echo "Cover extraído de: $input_file"; else echo "No se pudo extraer el cover de: $input_file"; fi' _
+    find "$dir" -type f -name "*$ext" -print0 | xargs -0 -n 1 -P "$NUM_THREADS" -I {} bash -c '
+        input_file="$1"
+        output_file="${input_file%.ogg}.jpg"
+        if ffmpeg -i "$input_file" -an -vcodec copy "$output_file" 2>/dev/null; then
+            echo "Cover extraído de: $input_file"
+        else
+            echo "No se pudo extraer el cover de: $input_file"
+        fi
+    ' _ {}
 }
 
 # Directorio raíz desde donde se ejecutará el script

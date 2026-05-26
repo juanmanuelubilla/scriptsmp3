@@ -54,22 +54,17 @@ extract_cover() {
     ffmpeg -i "${mp3_file}" -an -vcodec copy "${output_file}" < /dev/null 2> /dev/null
 }
 
-# Procesar los archivos uno por uno con una barra de progreso
+_REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/ui_common.sh
+source "$_REPO_ROOT/lib/ui_common.sh"
+
 for i in "${!mp3_files[@]}"; do
     mp3_file="${mp3_files[$i]}"
     extract_cover "$mp3_file"
-    
-    # Calcular el porcentaje de progreso
-    progress=$(( (i + 1) * 100 / total_files ))
-    
-    # Imprimir la barra de progreso con el contador a la derecha
-    echo -ne "\r["
-    for ((j = 0; j < progress / 2; j++)); do echo -n "#"; done
-    for ((j = progress / 2; j < 50; j++)); do echo -n "-"; done
-    printf "] %3d%% (%d/%d)" "$progress" "$((i + 1))" "$total_files"
+    ui_bar_render "$((i + 1))" "$total_files"
 done
 
-echo ""
+ui_bar_finish
 
 # Tiempo total de ejecución
 end_time=$(date +%s)

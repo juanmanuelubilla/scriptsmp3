@@ -50,8 +50,8 @@ NUM_THREADS=$(nproc)
 
 # Buscar archivos MP3 y procesarlos en paralelo con xargs
 find "$root_directory" -type f -name "*.mp3" -print0 | \
-xargs -0 -n 1 -P "$NUM_THREADS" bash -c '
-    mp3_file="$0"
+xargs -0 -n 1 -P "$NUM_THREADS" -I {} bash -c '
+    mp3_file="$1"
     aac_file="${mp3_file%.mp3}.m4a"
     IFS="|" read -r -a metadata <<< "$(mediainfo --Output="General;%Track%|%Performer%|%Title%|%Album%|%Genre%|%Year%" "$mp3_file")"
     track="${metadata[0]}"
@@ -72,6 +72,6 @@ xargs -0 -n 1 -P "$NUM_THREADS" bash -c '
     else
         echo "Error al procesar: $mp3_file"
     fi
-' 
+' _ {}
 
 echo "Proceso completado."

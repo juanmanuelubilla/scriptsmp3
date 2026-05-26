@@ -1,102 +1,88 @@
 #!/bin/bash
+# Conversión OGG → MP3 (carátulas y metadata)
 
-# Registrar el tiempo inicial
+clear
+
+if [[ "$EUID" -ne 0 ]]; then
+  echo "Este script debe ejecutarse como root: sudo ./convertmp3.sh <directorio> [bitrate]"
+  exit 1
+fi
+
 start_time=$(date +%s)
 
-# Verificar que se haya proporcionado un argumento
 if [ -z "$1" ]; then
-  echo "Por favor, proporciona un directorio."
+  echo "Uso: $0 <directorio> [bitrate_kbps]"
   exit 1
 fi
 
-# Verificar si el argumento es un directorio válido
 if [ ! -d "$1" ]; then
-  echo "El argumento proporcionado no es un directorio válido."
+  echo "El directorio proporcionado no es válido: $1"
   exit 1
 fi
 
-# Contar carpetas y archivos en el directorio proporcionado
-carpetas=$(find "$1" -type d | wc -l)
-archivos=$(find "$1" -type f | wc -l)
+DIRECTORIO="$1"
+BITRATE="${2:-128}"
 
-# Imprimir el resumen con saltos de línea
-echo -e "CARPETAS: $((carpetas - 1))\nARCHIVOS: $archivos\n\n"
+carpetas=$(find "$DIRECTORIO" -type d | wc -l)
+archivos=$(find "$DIRECTORIO" -type f | wc -l)
 
-#RUTA ACTUAL
-ruta_actual=$(pwd)
+_REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=lib/install_deps.sh
+source "$_REPO_ROOT/lib/install_deps.sh"
+# shellcheck source=lib/ui_common.sh
+source "$_REPO_ROOT/lib/ui_common.sh"
+install_deps_ogg_to_mp3 >/dev/null 2>&1
+require_whiptail || exit 1
 
-#IMPRIMO LA RUTA DONDE SE TRABAJA
-echo "LA RUTA ESPECIFICADA ES: $1"
-echo "LA CALIDAD ESPECIFICADA PARA LOS M4A es $2"
+mensaje=$(whiptail_msg "Ruta: $DIRECTORIO\nCarpetas: $((carpetas - 1))\nArchivos: $archivos\nBitrate MP3: ${BITRATE} kbps\n\nEspacio = marcar/desmarcar, Enter = confirmar, Esc = cancelar")
 
-#INSTALO LO QUE NECESITO
-sudo apt-get install ffmpeg lame vorbis-tools atomicparsley mediainfo fdkaac parallel eyed3 id3v2 -y
+opciones=$(whiptail --title "CONVERSIÓN DE OGG A MP3" --checklist "$mensaje" 22 82 7 \
+  "1" "Renombrar archivos con caracteres raros" ON \
+  "2" "Extraer covers de archivos OGG" ON \
+  "3" "Convertir archivos a MP3" ON \
+  "4" "Importar covers a MP3" ON \
+  "5" "Importar metadata a MP3" ON \
+  "6" "Borrar archivos JPG (covers)" ON \
+  "7" "Eliminar archivos .OGG (confirmación)" OFF 3>&1 1>&2 2>&3)
 
-# EJECUTO ARCHIVO BASH PARA RENOMBRAR ARCHIVOS QUE TIENEN CARACTERES RAROS
-sudo ./to_ogg/mp3renombrar.sh "$1"
-
-#EXTRAIGO LOS COVER DE LOS ARCHIVOS OGG
-sudo ./to_mp3/oggextractimage.sh "$1"
-
-#CONVIERTO LOS ARCHIVOS A M4A
-sudo ./to_mp3/oggconvert.sh "$1" 128
-
-#IMPORTO LOS COVER A LOS M4A
-sudo ./to_mp3/oggimportimage.sh "$1"
-
-#IMPORTO LA METADATA
-sudo ./to_mp3/oggimportmetadata.sh "$1"
-
-#BORRO TODOS LOS JPG
-sudo ./to_mp3/oggdeletecover.sh "$1"
-
-
-#AGREGO ACA EL SCRIPT DE BORRADO OGG PARA NO HACER CAGADAS...
-# Verificar si se ha pasado un argumento (directorio)
-if [ -z "$1" ]; then
-  echo "DEBES PROPORCIONAR UN DIRECTORIO COMO PARÁMETRO"
+if [ $? -ne 0 ]; then
+  echo "Operación cancelada."
   exit 1
 fi
 
-# Directorio proporcionado como argumento
-root_directory="$1"
+readarray -t opciones_array < <(whiptail_parse_checklist "$opciones")
 
-# Verificar si el directorio existe
-if [ ! -d "$root_directory" ]; then
-  echo "EL DIRECTORIO '$root_directory' NO EXISTE"
-  exit 1
-fi
+eliminar_ogg() {
+  ogg_files=$(find "$DIRECTORIO" -type f -name "*.ogg")
+  if [ -z "$ogg_files" ]; then
+    echo "No se encontraron archivos .ogg."
+    return
+  fi
+  echo "$ogg_files"
+  echo -e "\e[31m¡ATENCIÓN! Se eliminarán todos los .ogg en '$DIRECTORIO'.\e[0m"
+  read -p "¿Continuar? (y/n): " respuesta
+  if [[ "$respuesta" =~ ^[Yy]$ ]]; then
+    find "$DIRECTORIO" -type f -name "*.ogg" -print0 | while IFS= read -r -d '' archivo; do
+      rm "$archivo" && echo "Eliminado: $archivo"
+    done
+  fi
+}
 
-find "$root_directory" -type d
+for opcion in "${opciones_array[@]}"; do
+  case $opcion in
+    1) ./to_ogg/mp3renombrar.sh "$DIRECTORIO" ;;
+    2) ./to_mp3/oggextractimage.sh "$DIRECTORIO" ;;
+    3) ./to_mp3/oggconvert.sh "$DIRECTORIO" "$BITRATE" ;;
+    4) ./to_mp3/oggimportimage.sh "$DIRECTORIO" ;;
+    5) ./to_mp3/oggimportmetadata.sh "$DIRECTORIO" ;;
+    6) ./to_mp3/oggdeletecover.sh "$DIRECTORIO" ;;
+    7) eliminar_ogg ;;
+    *) echo "Opción inválida: $opcion" ;;
+  esac
+done
 
-# Buscar todos los archivos .ogg
-ogg_files=$(find "$root_directory" -type f -name "*.ogg")
-
-# Si no se encontraron archivos .ogg
-if [ -z "$ogg_files" ]; then
-  echo "NO SE ENCONTRARON ARCHIVOS .OGG EN '$root_directory'"
-  exit 0
-fi
-
-# Mostrar los archivos encontrados antes de eliminar
-echo "Se encontraron los siguientes archivos .OGG que serán eliminados:"
-echo "$ogg_files"
-
-# Eliminar los archivos .ogg
-echo "ELIMINANDO LOS ARCHIVOS .OGG..."
-while IFS= read -r -d '' archivo; do
-  rm "$archivo" && echo "ELIMINADO: $archivo"
-done < <(find "$root_directory" -type f -name "*.ogg" -print0)
-
-echo "ELIMINACIÓN COMPLETA."
-
-
-
-# Registrar el tiempo final
 end_time=$(date +%s)
-
-# Calcular y mostrar el tiempo total de ejecución
 execution_time=$((end_time - start_time))
 execution_time_hours=$(echo "scale=2; $execution_time / 3600" | bc)
-echo -e "\033[1;36mEl script se completó en $execution_time segundos.\033[0m"
-echo -e "\033[1;36mEsto equivale a aproximadamente $execution_time_hours horas.\033[0m"
+echo ""
+echo -e "\033[1;36mEl script se completó en $execution_time segundos (~$execution_time_hours h).\033[0m"

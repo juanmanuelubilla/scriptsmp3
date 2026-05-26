@@ -1,38 +1,46 @@
 #!/bin/bash
 
-# Directorio raíz desde donde se buscarán los archivos OGG
 root_directory="$1"
+quality="${2:-128}"
 
-# Calidad de la conversión en kbps (opciones: 64, 128, 192, 256, 320)
-quality="$2"
+if [ -z "$root_directory" ] || [ ! -d "$root_directory" ]; then
+    echo "Uso: $0 <directorio> [bitrate_kbps]"
+    exit 1
+fi
 
-# Función para convertir un archivo OGG a MP3 con la calidad indicada
+_REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/convert_mp3.sh
+source "$_REPO_ROOT/lib/convert_mp3.sh"
+
+if ! command -v ffmpeg &>/dev/null; then
+    echo "Error: ffmpeg no está instalado."
+    exit 1
+fi
+
+export quality
+
 convert_to_mp3() {
-    input_file="$1"
-    output_file="${input_file%.ogg}.mp3"
-    oggdec -o - "$input_file" | lame --add-id3v2 -b "$quality" - "$output_file"
+    local input_file="$1"
+    local output_file="${input_file%.ogg}.mp3"
+
+    if [ -f "$output_file" ]; then
+        echo "[OMITIDO] Ya existe: $output_file"
+        return 0
+    fi
+
+    if ffmpeg_ogg_to_mp3 "$input_file" "$output_file" "$quality"; then
+        echo "[OK] $input_file"
+    else
+        echo "[ERROR] $input_file"
+    fi
 }
 
-# Función para recorrer las carpetas y subcarpetas, convertir los archivos y borrar los OGG
-traverse_folders() {
-    local dir="$1"
-    local ext=".ogg"
-    
-    # Obtener el número de hilos disponibles
-    num_threads=$(nproc)
+export -f convert_to_mp3
+export -f ffmpeg_ogg_to_mp3
 
-    # Buscar todos los archivos OGG en el directorio y subdirectorios
-    find "$dir" -type f -name "*$ext" -print0 | xargs -0 -n 1 -P "$num_threads" -I {} bash -c '
-        convert_to_mp3() {
-            input_file="$1"
-            output_file="${input_file%.ogg}.mp3"
-            oggdec -o - "$input_file" | lame --add-id3v2 -b "$quality" - "$output_file"
-        }
-        convert_to_mp3 "$1"
-    ' _ {}
-}
+num_threads=$(nproc)
 
-# Ejecutar la función para recorrer las carpetas y convertir los archivos
-traverse_folders "$root_directory"
+find "$root_directory" -type f -name "*.ogg" -print0 | \
+xargs -0 -n 1 -P "$num_threads" -I {} bash -c 'convert_to_mp3 "$1"' _ {}
 
 echo "Conversión completada."

@@ -25,20 +25,13 @@ if ! command -v ffmpeg &> /dev/null; then
     exit 1
 fi
 
-# Función para instalar AtomicParsley si no está instalado
-instalar_atomicparsley() {
-  echo "Instalando AtomicParsley con apt..."
-  apt update && apt install -y atomicparsley
-}
+_REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/install_deps.sh
+source "$_REPO_ROOT/lib/install_deps.sh"
 
-# Verificar si AtomicParsley está instalado, de lo contrario, instalarlo
-if ! command -v AtomicParsley &> /dev/null; then
-  echo "AtomicParsley no está instalado. Intentando instalarlo..."
-  instalar_atomicparsley
-  if ! command -v AtomicParsley &> /dev/null; then
-    echo -e "\033[1;31mError: No se pudo instalar AtomicParsley.\033[0m"
-    exit 1
-  fi
+if ! require_command AtomicParsley atomicparsley; then
+  echo -e "\033[1;31mError: AtomicParsley no está disponible. apt install atomicparsley\033[0m"
+  exit 1
 fi
 
 # Función para agregar carátula a un archivo M4A

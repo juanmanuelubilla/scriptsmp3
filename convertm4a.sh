@@ -22,16 +22,17 @@ if [ ! -d "$1" ]; then
 fi
 
 DIRECTORIO="$1"
-CALIDAD="${3:-128}"  # Si no se pasa calidad, usar 96 por defecto
+CALIDAD="${2:-96}"  # Bitrate AAC en kbps (64|96|128|192|256|320)
 
-# Función para instalar dependencias
-instalar_dependencias() {
-  echo "Instalando dependencias necesarias..."
-  apt-get install -y ffmpeg faac vorbis-tools atomicparsley mediainfo fdkaac parallel whiptail
-}
+_REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=lib/install_deps.sh
+source "$_REPO_ROOT/lib/install_deps.sh"
+# shellcheck source=lib/ui_common.sh
+source "$_REPO_ROOT/lib/ui_common.sh"
 
-# Instalar dependencias obligatoriamente al inicio
-instalar_dependencias
+echo "Instalando dependencias (Debian 13 / sin faac)…"
+install_deps_m4a
+require_whiptail || exit 1
 
 # Contar carpetas y archivos en el directorio proporcionado
 carpetas=$(find "$DIRECTORIO" -type d | wc -l)
@@ -50,11 +51,9 @@ echo "CARPETAS: $((carpetas - 1))"
 echo "ARCHIVOS: $archivos"
 echo ""
 
-# Crear mensaje para el checklist
-mensaje="Ruta: $DIRECTORIO\nCarpetas: $((carpetas - 1))\nArchivos: $archivos\n\nSelecciona las opciones que quieres ejecutar:\n(Usa espacio para marcar, ENTER para confirmar)"
+mensaje=$(whiptail_msg "Ruta: $DIRECTORIO\nCarpetas: $((carpetas - 1))\nArchivos: $archivos\nBitrate AAC: ${CALIDAD} kbps\n\nEspacio = marcar/desmarcar, Enter = confirmar, Esc = cancelar")
 
-# Menú interactivo
-opciones=$(whiptail --title "CONVERSIÓN DE OGG A M4A" --checklist "$mensaje" 20 80 9 \
+opciones=$(whiptail --title "CONVERSIÓN DE OGG A M4A" --checklist "$mensaje" 22 82 9 \
 "1" "Renombrar archivos con caracteres raros" ON \
 "2" "Extraer cover de archivos OGG" ON \
 "3" "Convertir archivos a M4A (calidad: $CALIDAD)" ON \
@@ -70,8 +69,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Convertir string de opciones a array, eliminando comillas y separando correctamente
-readarray -t opciones_array < <(echo "$opciones" | tr -d '"' | tr ' ' '\n')
+readarray -t opciones_array < <(whiptail_parse_checklist "$opciones")
 
 eliminar_ogg() {
   echo "Buscando archivos .ogg en $DIRECTORIO..."

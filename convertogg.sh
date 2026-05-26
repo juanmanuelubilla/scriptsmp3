@@ -28,8 +28,13 @@ archivos=$(find "$1" -type f | wc -l)
 
 info="\nLA RUTA ESPECIFICADA ES: $1\nCARPETAS: $((carpetas - 1))\nARCHIVOS: $archivos"
 
-# Instalaciones automáticas
-apt-get install faac ffmpeg dir2ogg gawk kid3-cli sysstat findutils flac lame mplayer libimage-exiftool-perl parallel bc -y > /dev/null 2>&1
+_REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=lib/install_deps.sh
+source "$_REPO_ROOT/lib/install_deps.sh"
+# shellcheck source=lib/ui_common.sh
+source "$_REPO_ROOT/lib/ui_common.sh"
+install_deps_mp3_to_ogg > /dev/null 2>&1
+require_whiptail || exit 1
 
 ./to_ogg/install_powershell.sh > /dev/null 2>&1
 
@@ -48,8 +53,7 @@ echo "LA RUTA ESPECIFICADA ES: $1"
 echo "CARPETAS: $((carpetas - 1))"
 echo "ARCHIVOS: $archivos"
 
-# Menú interactivo con whiptail
-opciones=$(whiptail --title "CONVERTIR MP3 A OGG" --checklist "$(echo -e "$info\n\nUsa la barra espaciadora para seleccionar/desmarcar y ENTER para confirmar:")" 20 100 6 \
+opciones=$(whiptail --title "CONVERTIR MP3 A OGG" --checklist "$(whiptail_msg "$info\n\nEspacio = marcar/desmarcar, Enter = confirmar, Esc = cancelar")" 22 100 6 \
 "1" "Renombrar archivos con caracteres raros" ON \
 "2" "Extraer cover del álbum" ON \
 "3" "Convertir carpetas a OGG" ON \
@@ -64,11 +68,10 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Convertir las opciones seleccionadas en un array y eliminar comillas
-IFS=' ' read -r -a opciones <<< "$(echo $opciones | tr -d '"')"
+readarray -t opciones_array < <(whiptail_parse_checklist "$opciones")
 
 # Ejecutar las opciones seleccionadas
-for opcion in "${opciones[@]}"; do
+for opcion in "${opciones_array[@]}"; do
   case $opcion in
     1)
       ./to_ogg/mp3renombrar.sh "$1"
@@ -133,7 +136,7 @@ for opcion in "${opciones[@]}"; do
       echo ""
       echo -e "\033[1;36m+-------------------------------------------------------+\033[0m"
       echo -e "\033[1;36m|        Buscando TAGS en archivos huerfanos            |\033[0m"
-      echo -e "\033[1;36m| Los archivos modificados se copiaran a \home\pi\Music |\033[0m"
+      echo -e "\033[1;36m| Los archivos modificados se copiarán según config de beet |\033[0m"
       echo -e "\033[1;36m+-------------------------------------------------------+\033[0m"
       echo ""
 

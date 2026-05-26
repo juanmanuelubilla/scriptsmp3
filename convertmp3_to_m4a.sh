@@ -21,9 +21,15 @@ DIR="$1"
 
 # *** Eliminar la petición de calidad M4A ***
 
-# Instalar paquetes sin preguntar
-echo "Instalando paquetes necesarios..."
-apt-get install ffmpeg faac vorbis-tools atomicparsley mediainfo fdkaac parallel -y
+_REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=lib/install_deps.sh
+source "$_REPO_ROOT/lib/install_deps.sh"
+# shellcheck source=lib/ui_common.sh
+source "$_REPO_ROOT/lib/ui_common.sh"
+
+echo "Instalando paquetes necesarios (ffmpeg, sin faac/fdkaac)…"
+install_deps_m4a
+require_whiptail || exit 1
 
 script_start_time=$(date +%s)
 
@@ -47,14 +53,15 @@ echo "CARPETAS: $((carpetas - 1))"
 echo "ARCHIVOS: $archivos"
 
 # Mostrar menú para selección múltiple
-opcion=$(whiptail --title "CONVERTIR ARCHIVOS DE MP3 A M4A" --checklist "$(echo -e "$info\n\nUsa la barra espaciadora para seleccionar/desmarcar y ENTER para confirmar:")" 20 100 8 \
+opcion=$(whiptail --title "CONVERTIR ARCHIVOS DE MP3 A M4A" --checklist "$(whiptail_msg "$info\n\nEspacio = marcar/desmarcar, Enter = confirmar, Esc = cancelar")" 24 100 9 \
   "1" "Renombrar archivos con caracteres raros" ON \
-  "2" "Extraer covers de archivos OGG" ON \
+  "2" "Extraer covers de archivos MP3" ON \
   "3" "Convertir archivos a M4A" ON \
   "4" "Importar covers a M4A" ON \
-  "5" "Borrar archivos JPG" ON \
-  "6" "Eliminar archivos .mp3" ON \
-  "7" "Buscar Tags de Nombre / Album / Artista en archivos sin tags" OFF 3>&1 1>&2 2>&3)
+  "5" "Importar metadata a M4A" ON \
+  "6" "Borrar archivos JPG (covers)" ON \
+  "7" "Eliminar archivos .mp3 (confirmación)" OFF \
+  "8" "Buscar tags con beet (opcional)" OFF 3>&1 1>&2 2>&3)
 
 # Verificar cancelación
 if [ $? -ne 0 ]; then
@@ -62,8 +69,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Convertir las opciones seleccionadas en array y eliminar comillas
-IFS=' ' read -r -a opciones <<< "$(echo $opcion | tr -d '"')"
+readarray -t opciones < <(whiptail_parse_checklist "$opcion")
 
 # Ejecutar opciones seleccionadas
 for opt in "${opciones[@]}"; do
@@ -81,9 +87,12 @@ for opt in "${opciones[@]}"; do
       ./mp3_to_m4a/mp3importimage.sh "$DIR"
       ;;
     5)
-      ./mp3_to_m4a/mp3deletecover.sh "$DIR"
+      ./mp3_to_m4a/mp3importmetadata.sh "$DIR"
       ;;
     6)
+      ./mp3_to_m4a/mp3deletecover.sh "$DIR"
+      ;;
+    7)
       start_time=$(date +%s)
 
       echo ""
@@ -116,12 +125,12 @@ for opt in "${opciones[@]}"; do
       seconds=$((duration % 60))
       echo "Archivos eliminados en: ${minutes}m ${seconds}s"
       ;;
-    7)
+    8)
       start_time=$(date +%s)
 
       echo ""
       echo -e "\033[1;36m+-------------------------------------------------------+\033[0m"
-      echo -e "\033[1;36m|        Buscando TAGS en archivos huerfanos            |\033[0m"
+      echo -e "\033[1;36m|        Buscando TAGS en archivos huérfanos            |\033[0m"
       echo -e "\033[1;36m| Los archivos modificados se copiarán a /home/pi/Music |\033[0m"
       echo -e "\033[1;36m+-------------------------------------------------------+\033[0m"
       echo ""

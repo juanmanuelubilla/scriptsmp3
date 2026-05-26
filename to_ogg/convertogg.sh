@@ -6,8 +6,11 @@ ruta_actual=$(pwd)
 #IMPRIMO LA RUTA DONDE SE TRABAJA
 echo "LA RUTA ESPECIFICADA ES: $1"
 
-#INSTALO LO QUE NECESITO
-sudo apt-get install ffmpeg dir2ogg kid3-cli -y
+#INSTALO LO QUE NECESITO (Debian 13: sin faac)
+_REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/install_deps.sh
+source "$_REPO_ROOT/lib/install_deps.sh"
+install_deps_mp3_to_ogg
 
 #VERIFICO E INSTALO POWERSHELL
 sudo ./to_ogg/install_powershell.sh

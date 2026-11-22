@@ -11,9 +11,10 @@ ffmpeg_to_m4a() {
   fi
 
   ffmpeg -y -i "$input_file" \
-    -vn \
+    -map 0:a \
     -c:a aac \
     -b:a "${bitrate_kbps}k" \
+    -map_metadata 0 -map_metadata 0:s:a:0 \
     -movflags +faststart \
     "$output_file" \
     -loglevel error 2>/dev/null

@@ -128,12 +128,12 @@ def extract_cover(audio_file: Path, log: LogFn) -> Path | None:
         "-i",
         str(audio_file),
         "-an",
-        "-vcodec",
-        "copy",
+        "-vframes",
+        "1",
         str(out),
     ]
     if _run(cmd, log):
-        if out.stat().st_size > 0:
+        if out.exists() and out.stat().st_size > 0:
             log(f"Cover extraído: {audio_file.name}")
             return out
     if out.exists():
@@ -156,22 +156,61 @@ def convert_file(
     br = str(bitrate_kbps)
 
     if pipeline.id == "mp3_ogg":
-        cmd = [ff, "-y", "-i", str(src), "-c:a", "libvorbis", "-q:a", "4", str(dst)]
+        cmd = [
+            ff,
+            "-y",
+            "-i",
+            str(src),
+            "-map",
+            "0:a",
+            "-c:a",
+            "libvorbis",
+            "-q:a",
+            "4",
+            "-map_metadata",
+            "0",
+            "-map_metadata",
+            "0:s:a:0",
+            str(dst),
+        ]
     elif pipeline.id == "ogg_mp3":
-        cmd = [ff, "-y", "-i", str(src), "-c:a", "libmp3lame", "-b:a", f"{br}k", str(dst)]
+        cmd = [
+            ff,
+            "-y",
+            "-i",
+            str(src),
+            "-map",
+            "0:a",
+            "-c:a",
+            "libmp3lame",
+            "-b:a",
+            f"{br}k",
+            "-id3v2_version",
+            "3",
+            "-map_metadata",
+            "0",
+            "-map_metadata",
+            "0:s:a:0",
+            str(dst),
+        ]
     elif pipeline.id in ("ogg_m4a", "mp3_m4a"):
         cmd = [
             ff,
             "-y",
             "-i",
             str(src),
-            "-vn",
+            "-map",
+            "0:a",
             "-c:a",
             "aac",
             "-b:a",
             f"{br}k",
             "-movflags",
             "+faststart",
+            "-map_metadata",
+            "0",
+            "-map_metadata",
+            "0:s:a:0",
             str(dst),
         ]
     else:
@@ -186,7 +225,7 @@ def convert_file(
 
 def import_cover_ffmpeg(audio: Path, cover: Path, log: LogFn) -> bool:
     ff = ffmpeg_path() or "ffmpeg"
-    tmp = audio.with_suffix(audio.suffix + ".tmp")
+    tmp = audio.with_name(f"{audio.stem}_cover_tmp{audio.suffix}")
     ext = audio.suffix.lower()
 
     if ext == ".mp3":
@@ -198,17 +237,19 @@ def import_cover_ffmpeg(audio: Path, cover: Path, log: LogFn) -> bool:
             "-i",
             str(cover),
             "-map",
-            "0",
+            "0:a",
             "-map",
-            "1",
+            "1:v",
             "-c",
             "copy",
             "-id3v2_version",
             "3",
-            "-metadata:s:v",
-            "title=Album cover",
-            "-metadata:s:v",
-            "comment=Cover (front)",
+            "-map_metadata",
+            "0",
+            "-map_metadata",
+            "0:s:a:0",
+            "-disposition:v:0",
+            "attached_pic",
             str(tmp),
         ]
     elif ext in (".m4a", ".mp4"):
@@ -220,11 +261,15 @@ def import_cover_ffmpeg(audio: Path, cover: Path, log: LogFn) -> bool:
             "-i",
             str(cover),
             "-map",
-            "0",
+            "0:a",
             "-map",
-            "1",
+            "1:v",
             "-c",
             "copy",
+            "-map_metadata",
+            "0",
+            "-map_metadata",
+            "0:s:a:0",
             "-disposition:v:0",
             "attached_pic",
             str(tmp),
@@ -244,7 +289,13 @@ def import_cover_ffmpeg(audio: Path, cover: Path, log: LogFn) -> bool:
             "-c:a",
             "copy",
             "-c:v",
-            "mjpeg",
+            "libtheora",
+            "-map_metadata",
+            "0",
+            "-map_metadata",
+            "0:s:a:0",
+            "-disposition:v:0",
+            "attached_pic",
             str(tmp),
         ]
     else:

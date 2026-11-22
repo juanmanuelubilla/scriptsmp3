@@ -7,10 +7,11 @@ ffmpeg_ogg_to_mp3() {
   local bitrate_kbps="${3:-128}"
 
   ffmpeg -y -i "$input_file" \
-    -vn \
+    -map 0:a \
     -c:a libmp3lame \
     -b:a "${bitrate_kbps}k" \
     -id3v2_version 3 \
+    -map_metadata 0 -map_metadata 0:s:a:0 \
     "$output_file" \
     -loglevel error 2>/dev/null
 }
